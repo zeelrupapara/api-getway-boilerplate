@@ -11,7 +11,10 @@ import (
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/db"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/cache"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/messaging"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/oauth2"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/model/common/v1"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/internal/handlers"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/internal/middleware"
 )
 
 // Application represents the main application instance
@@ -25,8 +28,8 @@ type Application struct {
 	DB       *db.Database
 	Cache    *cache.Cache
 	Messaging *messaging.NATS
+	OAuth2   *oauth2.Service
 	// Hub    *manager.Hub
-	// OAuth2 *oauth2.Service
 	// Authz  *authz.Service
 }
 
@@ -189,8 +192,11 @@ func (a *Application) initializeDependencies() error {
 		a.Logger.Warn("Failed to setup cannabis subscriptions", "error", err)
 	}
 
+	// Initialize OAuth2 service
+	oauth2Service := oauth2.NewService(&a.Config.JWT, a.Logger, a.Cache)
+	a.OAuth2 = oauth2Service
+
 	// TODO: Initialize WebSocket hub
-	// TODO: Initialize OAuth2 service
 	// TODO: Initialize authorization service
 
 	a.Logger.Info("Dependencies initialization completed")
@@ -221,7 +227,9 @@ func (a *Application) setupRoutes() error {
 	// Cannabis compliance notice endpoint
 	api.Get("/compliance", a.complianceInfoHandler)
 
-	// TODO: Add authentication routes in Phase 7
+	// Authentication routes (Phase 3.1)
+	a.setupAuthRoutes(api)
+
 	// TODO: Add user management routes in Phase 7
 	// TODO: Add RBAC routes in Phase 7
 	// TODO: Add WebSocket routes in Phase 4
@@ -397,4 +405,34 @@ func createErrorHandler(log *logger.Logger) fiber.ErrorHandler {
 			"cannabis_notice": "This platform requires age verification (21+) and compliance with local cannabis laws",
 		})
 	}
+}
+
+// setupAuthRoutes sets up authentication routes
+func (a *Application) setupAuthRoutes(api fiber.Router) {
+	a.Logger.Info("Setting up authentication routes...")
+
+	// Create auth handler
+	authHandler := handlers.NewAuthHandler(a.OAuth2, a.Logger, a.DB, a.Messaging)
+
+	// Authentication group
+	auth := api.Group("/auth")
+
+	// Public authentication endpoints
+	auth.Post("/login", authHandler.Login)
+	auth.Post("/refresh", authHandler.RefreshToken)
+
+	// Protected authentication endpoints (require valid session)
+	authMiddleware := middleware.AuthMiddleware(middleware.AuthConfig{
+		OAuth2Service: a.OAuth2,
+		Logger:        a.Logger,
+		SkipPaths:     []string{}, // No skip paths for protected routes
+	})
+
+	protected := auth.Group("", authMiddleware)
+	protected.Post("/logout", authHandler.Logout)
+	protected.Get("/profile", authHandler.GetProfile)
+	protected.Post("/verify-compliance", authHandler.VerifyCompliance)
+	protected.Get("/sessions", authHandler.GetSessions)
+
+	a.Logger.Info("Authentication routes setup completed")
 }
