@@ -1,0 +1,92 @@
+# GreenLync API Gateway Configuration
+# Cannabis Social Commerce Platform
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "120s"
+  allowed_origins: "*"
+  debug: true
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "greenlync_dev_password"
+  name: "greenlync_dev"
+  ssl_mode: "disable"
+  timezone: "UTC"
+  max_open_conns: 25
+  max_idle_conns: 10
+  max_lifetime: 3600
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  database: 0
+  max_retries: 3
+  pool_size: 10
+  min_idle_conn: 5
+  dial_timeout: "5s"
+  read_timeout: "3s"
+
+nats:
+  url: "nats://localhost:4222"
+  cluster_id: "greenlync-cluster"
+  client_id: "greenlync-gateway"
+  connect_timeout: "10s"
+  reconnect_wait: "2s"
+  max_reconnects: 10
+  ping_interval: "2m"
+  max_pings_out: 2
+
+jwt:
+  secret: "greenlync_super_secret_jwt_key_for_development_only_32_chars_minimum"
+  access_expiry: "15m"
+  refresh_expiry: "168h" # 7 days
+  issuer: "greenlync-gateway"
+  audience: "greenlync-platform"
+  require_https: false
+  max_sessions: 3
+
+cannabis:
+  age_verification_required: true
+  minimum_age: 21
+  legal_states:
+    - "CA"  # California
+    - "CO"  # Colorado
+    - "WA"  # Washington
+    - "OR"  # Oregon
+    - "NV"  # Nevada
+    - "AZ"  # Arizona
+    - "NY"  # New York
+    - "IL"  # Illinois
+    - "NJ"  # New Jersey
+    - "VA"  # Virginia
+    - "CT"  # Connecticut
+    - "MT"  # Montana
+    - "VT"  # Vermont
+    - "AK"  # Alaska
+    - "MA"  # Massachusetts
+    - "ME"  # Maine
+    - "MI"  # Michigan
+    - "MD"  # Maryland
+    - "MO"  # Missouri
+    - "OH"  # Ohio
+  compliance_mode: "strict"
+  audit_logging: true
+  state_check_enabled: true
+  purchase_limit_tracking: true
+
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"
+  structured: true
+  file_output: ""
+  max_file_size: 100
+  max_backups: 3
+  max_age: 28
