@@ -10,6 +10,7 @@ import (
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/logger"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/db"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/cache"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/messaging"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/model/common/v1"
 )
 
@@ -21,9 +22,9 @@ type Application struct {
 	Fiber  *fiber.App
 	
 	// Services will be added as we implement them
-	DB     *db.Database
-	Cache  *cache.Cache
-	// NATS   *nats.Client
+	DB       *db.Database
+	Cache    *cache.Cache
+	Messaging *messaging.NATS
 	// Hub    *manager.Hub
 	// OAuth2 *oauth2.Service
 	// Authz  *authz.Service
@@ -176,7 +177,18 @@ func (a *Application) initializeDependencies() error {
 	}
 	a.Cache = redisCache
 
-	// TODO: Initialize NATS messaging
+	// Initialize NATS messaging
+	natsMessaging, err := messaging.NewNATS(&a.Config.NATS, a.Logger)
+	if err != nil {
+		return fmt.Errorf("failed to initialize NATS messaging: %w", err)
+	}
+	a.Messaging = natsMessaging
+
+	// Setup cannabis platform subscriptions
+	if err := a.Messaging.SetupCannabisSubscriptions(); err != nil {
+		a.Logger.Warn("Failed to setup cannabis subscriptions", "error", err)
+	}
+
 	// TODO: Initialize WebSocket hub
 	// TODO: Initialize OAuth2 service
 	// TODO: Initialize authorization service
@@ -238,7 +250,14 @@ func (a *Application) shutdownDependencies(ctx context.Context) error {
 		}
 	}
 
-	// TODO: Close NATS connections
+	// Close NATS connections
+	if a.Messaging != nil {
+		if err := a.Messaging.Close(); err != nil {
+			a.Logger.Error("Failed to close NATS connection", "error", err)
+			return err
+		}
+	}
+
 	// TODO: Close WebSocket hub
 
 	a.Logger.Info("Dependencies shutdown completed")
@@ -284,9 +303,7 @@ func (a *Application) complianceInfoHandler(c *fiber.Ctx) error {
 
 // getDependencyHealth returns the health status of all dependencies
 func (a *Application) getDependencyHealth() map[string]interface{} {
-	health := map[string]interface{}{
-		"nats": "not_initialized",
-	}
+	health := make(map[string]interface{})
 
 	// Check database health
 	if a.DB != nil {
@@ -326,6 +343,23 @@ func (a *Application) getDependencyHealth() map[string]interface{} {
 		}
 	} else {
 		health["redis"] = "not_initialized"
+	}
+
+	// Check NATS health
+	if a.Messaging != nil {
+		if err := a.Messaging.Health(); err != nil {
+			health["nats"] = map[string]interface{}{
+				"status": "unhealthy",
+				"error":  err.Error(),
+			}
+		} else {
+			health["nats"] = map[string]interface{}{
+				"status": "healthy",
+				"stats":  a.Messaging.GetStats(),
+			}
+		}
+	} else {
+		health["nats"] = "not_initialized"
 	}
 
 	return health
