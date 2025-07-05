@@ -12,6 +12,7 @@ import (
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/cache"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/messaging"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/oauth2"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/authz"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/model/common/v1"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/internal/handlers"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/internal/middleware"
@@ -30,8 +31,8 @@ type Application struct {
 	SessionManager *cache.SessionManager
 	Messaging     *messaging.NATS
 	OAuth2        *oauth2.Service
+	Authz         *authz.Service
 	// Hub    *manager.Hub
-	// Authz  *authz.Service
 }
 
 // NewApplication creates a new application instance with dependency injection
@@ -201,8 +202,14 @@ func (a *Application) initializeDependencies() error {
 	oauth2Service := oauth2.NewService(&a.Config.JWT, a.Logger, a.Cache)
 	a.OAuth2 = oauth2Service
 
+	// Initialize Casbin RBAC authorization service
+	authzService, err := authz.NewService(a.DB, a.Logger)
+	if err != nil {
+		return fmt.Errorf("failed to initialize authorization service: %w", err)
+	}
+	a.Authz = authzService
+
 	// TODO: Initialize WebSocket hub
-	// TODO: Initialize authorization service
 
 	a.Logger.Info("Dependencies initialization completed")
 	return nil
@@ -238,8 +245,10 @@ func (a *Application) setupRoutes() error {
 	// Session management routes (Phase 3.2)
 	a.setupSessionRoutes(api)
 
+	// RBAC management routes (Phase 3.4)
+	a.setupRBACRoutes(api)
+
 	// TODO: Add user management routes in Phase 7
-	// TODO: Add RBAC routes in Phase 7
 	// TODO: Add WebSocket routes in Phase 4
 
 	a.Logger.Info("Routes setup completed")
@@ -475,4 +484,38 @@ func (a *Application) setupSessionRoutes(api fiber.Router) {
 	sessions.Post("/cleanup", middleware.RequireRole(a.OAuth2, a.Logger, v1.RoleSystemAdmin), sessionHandler.CleanupExpiredSessions)
 
 	a.Logger.Info("Session management routes setup completed")
+}
+
+// setupRBACRoutes sets up RBAC management routes
+func (a *Application) setupRBACRoutes(api fiber.Router) {
+	a.Logger.Info("Setting up RBAC management routes...")
+
+	// Create RBAC handler
+	rbacHandler := handlers.NewRBACHandler(a.Authz, a.Logger, a.Messaging)
+
+	// RBAC management group (requires authentication)
+	authMiddleware := middleware.AuthMiddleware(middleware.AuthConfig{
+		OAuth2Service: a.OAuth2,
+		Logger:        a.Logger,
+		SkipPaths:     []string{},
+	})
+
+	rbac := api.Group("/rbac", authMiddleware)
+
+	// Permission checking (available to managers and admins)
+	rbac.Post("/check-permission", middleware.RequireManagerRole(a.OAuth2, a.Logger), rbacHandler.CheckPermission)
+
+	// Role information (available to budtenders and above)
+	rbac.Get("/roles", middleware.RequireBudtenderRole(a.OAuth2, a.Authz, a.Logger), rbacHandler.GetAllRoles)
+	rbac.Get("/roles/:role/permissions", middleware.RequireBudtenderRole(a.OAuth2, a.Authz, a.Logger), rbacHandler.GetRolePermissions)
+
+	// Resource information (available to budtenders and above)
+	rbac.Get("/resources", middleware.RequireBudtenderRole(a.OAuth2, a.Authz, a.Logger), rbacHandler.GetCannabisResources)
+
+	// Policy management (admin only)
+	adminOnly := rbac.Group("", middleware.RequireAdminRole(a.OAuth2, a.Logger))
+	adminOnly.Post("/policies", rbacHandler.AddPolicy)
+	adminOnly.Delete("/policies", rbacHandler.RemovePolicy)
+
+	a.Logger.Info("RBAC management routes setup completed")
 }
