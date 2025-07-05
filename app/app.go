@@ -8,6 +8,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/config"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/logger"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/db"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/model/common/v1"
 )
 
 // Application represents the main application instance
@@ -18,7 +20,7 @@ type Application struct {
 	Fiber  *fiber.App
 	
 	// Services will be added as we implement them
-	// DB     *database.Database
+	DB     *db.Database
 	// Cache  *cache.Cache
 	// NATS   *nats.Client
 	// Hub    *manager.Hub
@@ -149,7 +151,23 @@ func (a *Application) Shutdown(ctx context.Context) error {
 func (a *Application) initializeDependencies() error {
 	a.Logger.Info("Initializing application dependencies...")
 
-	// TODO: Initialize database connection
+	// Initialize database connection
+	database, err := db.NewDatabase(&a.Config.Database, a.Logger)
+	if err != nil {
+		return fmt.Errorf("failed to initialize database: %w", err)
+	}
+	a.DB = database
+
+	// Run database migrations
+	if err := a.DB.AutoMigrate(v1.GetAllModels()...); err != nil {
+		return fmt.Errorf("failed to run database migrations: %w", err)
+	}
+
+	// Setup multi-tenancy (dispensary isolation)
+	if err := a.DB.SetupMultiTenancy(); err != nil {
+		a.Logger.Warn("Failed to setup multi-tenancy", "error", err)
+	}
+
 	// TODO: Initialize Redis cache
 	// TODO: Initialize NATS messaging
 	// TODO: Initialize WebSocket hub
@@ -197,7 +215,14 @@ func (a *Application) setupRoutes() error {
 func (a *Application) shutdownDependencies(ctx context.Context) error {
 	a.Logger.Info("Shutting down dependencies...")
 
-	// TODO: Close database connections
+	// Close database connections
+	if a.DB != nil {
+		if err := a.DB.Close(); err != nil {
+			a.Logger.Error("Failed to close database connection", "error", err)
+			return err
+		}
+	}
+
 	// TODO: Close Redis connections
 	// TODO: Close NATS connections
 	// TODO: Close WebSocket hub
@@ -220,12 +245,7 @@ func (a *Application) healthCheckHandler(c *fiber.Ctx) error {
 			"legal_states_count":       len(a.Config.Cannabis.LegalStates),
 			"audit_logging_enabled":    a.Config.Cannabis.AuditLogging,
 		},
-		"dependencies": map[string]string{
-			// TODO: Add dependency health checks
-			"database": "not_initialized",
-			"redis":    "not_initialized", 
-			"nats":     "not_initialized",
-		},
+		"dependencies": a.getDependencyHealth(),
 	}
 
 	return c.JSON(health)
@@ -246,6 +266,36 @@ func (a *Application) complianceInfoHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(compliance)
+}
+
+// getDependencyHealth returns the health status of all dependencies
+func (a *Application) getDependencyHealth() map[string]interface{} {
+	health := map[string]interface{}{
+		"redis": "not_initialized",
+		"nats":  "not_initialized",
+	}
+
+	// Check database health
+	if a.DB != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		
+		if err := a.DB.Health(ctx); err != nil {
+			health["database"] = map[string]interface{}{
+				"status": "unhealthy",
+				"error":  err.Error(),
+			}
+		} else {
+			health["database"] = map[string]interface{}{
+				"status": "healthy",
+				"stats":  a.DB.GetStats(),
+			}
+		}
+	} else {
+		health["database"] = "not_initialized"
+	}
+
+	return health
 }
 
 // createErrorHandler creates a custom error handler for cannabis compliance
