@@ -25,10 +25,11 @@ type Application struct {
 	Fiber  *fiber.App
 	
 	// Services will be added as we implement them
-	DB       *db.Database
-	Cache    *cache.Cache
-	Messaging *messaging.NATS
-	OAuth2   *oauth2.Service
+	DB            *db.Database
+	Cache         *cache.Cache
+	SessionManager *cache.SessionManager
+	Messaging     *messaging.NATS
+	OAuth2        *oauth2.Service
 	// Hub    *manager.Hub
 	// Authz  *authz.Service
 }
@@ -180,6 +181,10 @@ func (a *Application) initializeDependencies() error {
 	}
 	a.Cache = redisCache
 
+	// Initialize session manager
+	sessionManager := cache.NewSessionManager(a.Cache, a.Logger)
+	a.SessionManager = sessionManager
+
 	// Initialize NATS messaging
 	natsMessaging, err := messaging.NewNATS(&a.Config.NATS, a.Logger)
 	if err != nil {
@@ -229,6 +234,9 @@ func (a *Application) setupRoutes() error {
 
 	// Authentication routes (Phase 3.1)
 	a.setupAuthRoutes(api)
+
+	// Session management routes (Phase 3.2)
+	a.setupSessionRoutes(api)
 
 	// TODO: Add user management routes in Phase 7
 	// TODO: Add RBAC routes in Phase 7
@@ -435,4 +443,36 @@ func (a *Application) setupAuthRoutes(api fiber.Router) {
 	protected.Get("/sessions", authHandler.GetSessions)
 
 	a.Logger.Info("Authentication routes setup completed")
+}
+
+// setupSessionRoutes sets up session management routes
+func (a *Application) setupSessionRoutes(api fiber.Router) {
+	a.Logger.Info("Setting up session management routes...")
+
+	// Create session handler
+	sessionHandler := handlers.NewSessionHandler(a.SessionManager, a.Logger, a.Messaging)
+
+	// Session management group (requires authentication)
+	authMiddleware := middleware.AuthMiddleware(middleware.AuthConfig{
+		OAuth2Service: a.OAuth2,
+		Logger:        a.Logger,
+		SkipPaths:     []string{},
+	})
+
+	sessions := api.Group("/sessions", authMiddleware)
+
+	// Session activity tracking
+	sessions.Post("/track-activity", sessionHandler.TrackActivity)
+	sessions.Get("/activity", sessionHandler.GetActivity)
+
+	// Cannabis compliance management
+	sessions.Post("/update-compliance", sessionHandler.UpdateCompliance)
+
+	// Session metrics (admin/manager only)
+	sessions.Get("/metrics", middleware.RequirePermission(a.OAuth2, a.Logger, "view_reports"), sessionHandler.GetMetrics)
+
+	// Admin-only session management
+	sessions.Post("/cleanup", middleware.RequireRole(a.OAuth2, a.Logger, v1.RoleSystemAdmin), sessionHandler.CleanupExpiredSessions)
+
+	a.Logger.Info("Session management routes setup completed")
 }
