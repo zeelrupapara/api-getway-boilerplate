@@ -9,6 +9,7 @@ import (
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/config"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/logger"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/db"
+	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/cache"
 	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/model/common/v1"
 )
 
@@ -21,7 +22,7 @@ type Application struct {
 	
 	// Services will be added as we implement them
 	DB     *db.Database
-	// Cache  *cache.Cache
+	Cache  *cache.Cache
 	// NATS   *nats.Client
 	// Hub    *manager.Hub
 	// OAuth2 *oauth2.Service
@@ -168,7 +169,13 @@ func (a *Application) initializeDependencies() error {
 		a.Logger.Warn("Failed to setup multi-tenancy", "error", err)
 	}
 
-	// TODO: Initialize Redis cache
+	// Initialize Redis cache
+	redisCache, err := cache.NewCache(&a.Config.Redis, a.Logger)
+	if err != nil {
+		return fmt.Errorf("failed to initialize Redis cache: %w", err)
+	}
+	a.Cache = redisCache
+
 	// TODO: Initialize NATS messaging
 	// TODO: Initialize WebSocket hub
 	// TODO: Initialize OAuth2 service
@@ -223,7 +230,14 @@ func (a *Application) shutdownDependencies(ctx context.Context) error {
 		}
 	}
 
-	// TODO: Close Redis connections
+	// Close Redis connections
+	if a.Cache != nil {
+		if err := a.Cache.Close(); err != nil {
+			a.Logger.Error("Failed to close Redis connection", "error", err)
+			return err
+		}
+	}
+
 	// TODO: Close NATS connections
 	// TODO: Close WebSocket hub
 
@@ -271,8 +285,7 @@ func (a *Application) complianceInfoHandler(c *fiber.Ctx) error {
 // getDependencyHealth returns the health status of all dependencies
 func (a *Application) getDependencyHealth() map[string]interface{} {
 	health := map[string]interface{}{
-		"redis": "not_initialized",
-		"nats":  "not_initialized",
+		"nats": "not_initialized",
 	}
 
 	// Check database health
@@ -293,6 +306,26 @@ func (a *Application) getDependencyHealth() map[string]interface{} {
 		}
 	} else {
 		health["database"] = "not_initialized"
+	}
+
+	// Check Redis health
+	if a.Cache != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		
+		if err := a.Cache.Health(ctx); err != nil {
+			health["redis"] = map[string]interface{}{
+				"status": "unhealthy",
+				"error":  err.Error(),
+			}
+		} else {
+			health["redis"] = map[string]interface{}{
+				"status": "healthy",
+				"stats":  a.Cache.GetStats(),
+			}
+		}
+	} else {
+		health["redis"] = "not_initialized"
 	}
 
 	return health
