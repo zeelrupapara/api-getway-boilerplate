@@ -4,6 +4,8 @@
 package v1
 
 import (
+	"greenlync-api-gateway/internal/middleware/jaeger"
+	"greenlync-api-gateway/internal/middleware/prometheus"
 	"greenlync-api-gateway/pkg/authz"
 	"greenlync-api-gateway/pkg/errors"
 
@@ -26,6 +28,14 @@ func (s *HttpServer) RegisterV1() {
 
 	//************************ Global Middlewares *******************************
 	root.Use(cors.New())
+
+	// Initialize Prometheus metrics
+	prometheusMiddleware := prometheus.NewPrometheus(s.App.App)
+	s.App.App.Use(prometheusMiddleware.Middleware)
+
+	// Initialize Jaeger tracing
+	jaegerMiddleware := jaeger.NewJaegerMiddleware("greenlync-api-gateway")
+	root.Use(jaegerMiddleware)
 
 	api.Use(s.Middleware.UserAgentParser, s.Middleware.HeaderReader, s.Middleware.RequestsLogger)
 	ws.Use(s.Middleware.UserAgentParser, s.Middleware.HeaderReader, s.Middleware.RequestsLogger)
@@ -53,6 +63,8 @@ func (s *HttpServer) RegisterV1() {
 
 	// monitor
 	monitorRoutes.Get("/health", s.CheckSystemHealth)
+	monitorRoutes.Get("/ready", s.CheckReadiness)
+	monitorRoutes.Get("/live", s.CheckLiveness)
 
 	// Roles
 	roleRoutes := system.Group("/roles")
@@ -101,7 +113,6 @@ func (s *HttpServer) RegisterV1() {
 	configRoutes.Patch("/:config_id", s.Middleware.Authorization(authz.Resources_Config_Update), s.UpdateConfig)
 	configRoutes.Get("/groups/:group_id", s.Middleware.Authorization(authz.Resources_Config_Read), s.GetConfigsBelongToGroup)
 
-
 	// InEmails
 	emailRoutes.Use(s.Middleware.Protect)
 	emailRoutes.Get("/", s.Middleware.Authorization(authz.Resources_Emails_Read), s.GetAllInEmails)
@@ -114,7 +125,6 @@ func (s *HttpServer) RegisterV1() {
 	emailRoutes.Get("/me/draft", s.Middleware.Authorization(authz.Resources_MyEmails_Read), s.GetAccountDraftEmails)
 	emailRoutes.Get("/me/bin", s.Middleware.Authorization(authz.Resources_MyEmails_Read), s.GetAccountBinEmails)
 	emailRoutes.Get("/me/:tracking_id", s.Middleware.Authorization(authz.Resources_MyEmails_Read), s.GetAccountInEmail)
-
 
 	// in case no API route was found
 	api.All("*", func(c *fiber.Ctx) error {

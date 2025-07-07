@@ -1,56 +1,99 @@
 # GreenLync API Gateway
 
-Cannabis compliance management system built as a scalable API gateway.
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
 
-## By zeelrupapara@gmail.com, Lead Developer
+A production-ready, event-driven API Gateway built with Go, Fiber, and comprehensive monitoring capabilities. Originally designed for cannabis compliance systems but adaptable for any domain.
 
-This is a Golang API gateway boilerplate project for cannabis compliance and operations management.
+## 🚀 Features
 
-## Project Overview
+### Core Functionality
+- **High-Performance HTTP Server** - Built with Fiber framework for optimal performance
+- **Event-Driven Architecture** - NATS-based messaging for scalable microservices
+- **OAuth2 Authentication** - Complete authentication and authorization system
+- **Role-Based Access Control (RBAC)** - Casbin-powered authorization
+- **Real-time WebSocket Support** - Bidirectional communication capabilities
+- **RESTful API Design** - Well-structured API endpoints with Swagger documentation
 
-GreenLync API Gateway provides a complete foundation for cannabis businesses to manage:
-- Compliance tracking and reporting
-- Multi-jurisdiction operations
-- User authentication and authorization
-- Audit trails and documentation
-- Real-time data management
+### Monitoring & Observability
+- **Prometheus Metrics** - Comprehensive application and system metrics
+- **Jaeger Distributed Tracing** - Full request tracing across services
+- **Grafana Dashboards** - Pre-built dashboards for monitoring
+- **Centralized Logging** - Loki + Promtail for log aggregation
+- **Health Checks** - Readiness and liveness probes
+- **Alerting** - AlertManager integration with customizable alerts
 
-## Quick Start
+### Infrastructure
+- **Docker Support** - Multi-stage builds with security best practices
+- **Kubernetes Ready** - Health checks and proper container configuration
+- **Database Integration** - MySQL with connection pooling and migrations
+- **Redis Caching** - High-performance caching layer
+- **SMTP Integration** - Email notifications and templating
 
-### Prerequisites
-- Go 1.21.1+
-- Docker & Docker Compose
-- MySQL 8.0+
-- Redis 6.0+
+## 📋 Prerequisites
 
-### Development Setup
+- **Go 1.21+** - [Download](https://golang.org/dl/)
+- **Docker & Docker Compose** - [Download](https://docs.docker.com/get-docker/)
+- **Make** - Build automation tool
 
-1. **Start development dependencies:**
-   ```bash
-   make docker-stack-up
-   ```
+### Optional (for development)
+- **golangci-lint** - Code linting
+- **swag** - Swagger documentation generation
+- **Air** - Hot reload during development
 
-2. **Configure environment variables:**
-   Copy and modify the environment template:
-   ```bash
-   cp staging.env .env
-   # Edit .env with your settings
-   ```
+## 🛠️ Quick Start
 
-3. **Seed the database:**
-   ```bash
-   make seed -user admin -password your_secure_password
-   ```
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd greenlync-api-gateway
+```
 
-4. **Run the application:**
-   ```bash
-   make run
-   ```
+### 2. Setup Environment
+```bash
+# Copy environment template
+cp .env.example .env
 
-5. **Access the API:**
-   - API Gateway: http://localhost:8888
-   - Health Check: http://localhost:8888/health
-   - Swagger Docs: http://localhost:8888/swagger/
+# Edit .env with your configuration
+nano .env
+```
+
+### 3. Install Development Tools
+```bash
+make setup
+```
+
+### 4. Start with Docker Compose (Recommended)
+```bash
+# Start all services including monitoring stack
+make up
+
+# Or start only dependencies
+make stack-up
+```
+
+### 5. Verify Installation
+```bash
+# Check application health
+make health
+
+# View logs
+make logs
+```
+
+## 📊 Monitoring Access
+
+After starting the services, access the monitoring tools:
+
+| Service | URL | Default Credentials |
+|---------|-----|-------------------|
+| **API Gateway** | http://localhost:8888 | - |
+| **Swagger Docs** | http://localhost:8888/swagger | - |
+| **Grafana** | http://localhost:3000 | admin/admin |
+| **Prometheus** | http://localhost:9090 | - |
+| **Jaeger UI** | http://localhost:16686 | - |
+| **AlertManager** | http://localhost:9093 | - |
 
 ## Architecture
 

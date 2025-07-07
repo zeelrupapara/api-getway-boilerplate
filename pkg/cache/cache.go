@@ -65,3 +65,13 @@ func (e *Cache) Delete(ctx context.Context, key string) error {
 func (e *Cache) FlushAll(ctx context.Context) error {
 	return e.redis.FlushAll(ctx).Err()
 }
+
+// Ping checks if Redis connection is alive
+func (e *Cache) Ping(ctx context.Context) error {
+	return e.redis.Ping(ctx).Err()
+}
+
+// GetRedisClient returns the underlying Redis client for advanced operations
+func (e *Cache) GetRedisClient() *redis.Client {
+	return e.redis
+}

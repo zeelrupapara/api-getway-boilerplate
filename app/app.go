@@ -81,6 +81,7 @@ func Start() {
 
 	if redisClient != nil {
 		log.Logger.Infof("Connected to redis %s", cfg.Redis.RedisAddr)
+		monitor.ChangeStatus(monitor.Health_Redis, monitor.HealthStatus_running)
 	}
 
 	// make our cache wrapper from Redis
@@ -89,9 +90,11 @@ func Start() {
 	// connect to mysql using gorm and grap a session
 	dbSess, err := db.NewMysqDB(cfg)
 	if err != nil {
+		monitor.ChangeStatus(monitor.Health_Database, monitor.HealthStatus_error)
 		fmt.Printf("We have a problem connecting to database %v", err)
 		panic(0)
 	}
+	monitor.ChangeStatus(monitor.Health_Database, monitor.HealthStatus_running)
 
 	// This is the best time migrate in case you change the schema
 	err = dbSess.Migrate()
@@ -120,8 +123,10 @@ func Start() {
 	// Nats
 	nats, err := nats.NewNatClient(cfg)
 	if err != nil {
+		monitor.ChangeStatus(monitor.Health_NATS, monitor.HealthStatus_error)
 		log.Logger.Fatalf("Error Connecting to Nats: %v", err)
 	}
+	monitor.ChangeStatus(monitor.Health_NATS, monitor.HealthStatus_running)
 
 	// authorization
 	authz, err := authz.NewAuthz(dbSess.DB)

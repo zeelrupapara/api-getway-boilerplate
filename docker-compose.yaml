@@ -1,52 +1,343 @@
 version: '3.8'
+
 services:
+  # Main API Gateway Application
   greenlync-api-gateway:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+        COMMIT: ${COMMIT:-unknown}
+        DATE: ${DATE:-unknown}
     restart: always
     container_name: greenlync-api-gateway
     ports:
       - "8888:8888"
     depends_on:
-      - redis
-      - mysql
-      - nats
-    env_file:
-      - .env
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      jaeger:
+        condition: service_started
+    environment:
+      - BASE_URL=http://127.0.0.1:8888
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=:8888
+      - REDIS_URL=redis://redis:6379
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_DB=greenlync
+      - NATS_HOST=nats
+      - NATS_PORT=4222
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
+    volumes:
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/api/v1/system/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - greenlync_network
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=8888"
+      - "prometheus.io/path=/metrics"
 
-  redis:
-    image: redis:alpine
-    restart: always
-    container_name: redis
-    ports:
-      - "6379:6379"
-    networks:
-      - greenlync_network
-
+  # Database Services
   mysql:
-    image: mysql:8
+    image: mysql:8.0
     restart: always
     container_name: mysql
     ports:
       - "3306:3306"
     environment:
       MYSQL_DATABASE: greenlync
-      MYSQL_USER: root
-      MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: greenlync
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./monitoring/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=512M
+      --max_connections=1000
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - greenlync_network
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=3306"
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+      - ./monitoring/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - greenlync_network
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=6379"
+
+  # Message Queue
   nats:
-    image: nats:alpine
+    image: nats:2.10-alpine
     restart: always
     container_name: nats
     ports:
       - "4222:4222"
+      - "8222:8222" # HTTP monitoring port
+    command: >
+      -js
+      -m 8222
+      --max_payload 1MB
+      --max_pending 64MB
+      --max_connections 1000
+    volumes:
+      - nats_data:/data
     networks:
       - greenlync_network
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=8222"
+      - "prometheus.io/path=/varz"
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    restart: always
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - greenlync-api-gateway
+    networks:
+      - greenlync_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    restart: always
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_FEATURE_TOGGLES_ENABLE=ngalert
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - greenlync_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.51
+    restart: always
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14268:14268" # HTTP collector
+      - "6831:6831/udp" # Agent UDP compact
+      - "6832:6832/udp" # Agent UDP binary
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - COLLECTOR_OTLP_ENABLED=true
+    volumes:
+      - jaeger_data:/badger
+    networks:
+      - greenlync_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Log Management
+  loki:
+    image: grafana/loki:2.9.0
+    restart: always
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/tmp/loki
+    networks:
+      - greenlync_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    restart: always
+    container_name: promtail
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - ./logs:/var/log/app:ro
+      - /var/log:/var/log/host:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - greenlync_network
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    restart: always
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - greenlync_network
+
+  # Redis Exporter for Redis metrics
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    restart: always
+    container_name: redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - greenlync_network
+
+  # MySQL Exporter for MySQL metrics
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.15.0
+    restart: always
+    container_name: mysql-exporter
+    ports:
+      - "9104:9104"
+    environment:
+      - DATA_SOURCE_NAME=exporter:exporter_password@(mysql:3306)/
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - greenlync_network
+
+  # Alertmanager for alerting
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    restart: always
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    networks:
+      - greenlync_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  nats_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  jaeger_data:
+    driver: local
+  loki_data:
+    driver: local
+  alertmanager_data:
+    driver: local
 
 networks:
   greenlync_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

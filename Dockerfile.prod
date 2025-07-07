@@ -1,0 +1,79 @@
+# Production-ready Dockerfile for GreenLync API Gateway
+# Optimized for security, size, and performance
+
+# Stage 1: Build stage
+FROM golang:1.21-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    git \
+    ca-certificates \
+    tzdata \
+    upx
+
+# Set working directory
+WORKDIR /build
+
+# Copy go mod files first for better Docker layer caching
+COPY go.mod go.sum ./
+
+# Download and verify dependencies
+RUN go mod download && \
+    go mod verify
+
+# Copy source code
+COPY . .
+
+# Build arguments for versioning
+ARG VERSION=unknown
+ARG COMMIT=unknown
+ARG DATE=unknown
+
+# Run security checks and tests before building
+RUN go vet ./... && \
+    go test -short ./...
+
+# Build the application with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -a -installsuffix cgo \
+    -ldflags="-w -s -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE} -extldflags '-static'" \
+    -tags netgo \
+    -o greenlync-api-gateway \
+    cmd/*.go
+
+# Compress binary with UPX
+RUN upx --best --lzma greenlync-api-gateway
+
+# Stage 2: Distroless runtime stage for maximum security
+FROM gcr.io/distroless/static:nonroot
+
+# Copy timezone data for time operations
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Copy CA certificates for HTTPS operations
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Set working directory
+WORKDIR /app
+
+# Copy the compressed binary
+COPY --from=builder /build/greenlync-api-gateway .
+
+# Copy configuration and template files
+COPY --from=builder /build/pkg/authz/model.conf ./pkg/authz/model.conf
+COPY --from=builder /build/pkg/smtp/report_template.html ./pkg/smtp/report_template.html
+COPY --from=builder /build/pkg/smtp/demo_account_template.html ./pkg/smtp/demo_account_template.html
+COPY --from=builder /build/pkg/smtp/change_password_template.html ./pkg/smtp/change_password_template.html
+
+# Expose port
+EXPOSE 8888
+
+# Set environment variables
+ENV GIN_MODE=release
+ENV TZ=UTC
+
+# Run as non-root user (distroless default)
+USER nonroot:nonroot
+
+# Run the application
+ENTRYPOINT ["./greenlync-api-gateway"]

@@ -15,6 +15,7 @@ import (
 	"greenlync-api-gateway/pkg/nats"
 	"greenlync-api-gateway/pkg/oauth2"
 	"greenlync-api-gateway/pkg/smtp"
+	"time"
 
 	"github.com/go-co-op/gocron"
 	"github.com/go-playground/validator/v10"
@@ -50,6 +51,8 @@ type HttpServer struct {
 	Cron *gocron.Scheduler
 	// operations channel
 	operationCh chan *model.OperationsLog
+	// Server start time for uptime tracking
+	StartTime time.Time
 }
 
 func NewHTTP(app *http.App, db *gorm.DB, log *logger.Logger, cache *cache.Cache, nats *nats.Nats, authz *authz.Authz, oauth *oauth2.OAuth2, hub *manager.Hub, middleware *middleware.Middleware, smtp *smtp.SMTP, cfg *config.Config, validate *validator.Validate, cron *gocron.Scheduler) *HttpServer {
@@ -69,6 +72,7 @@ func NewHTTP(app *http.App, db *gorm.DB, log *logger.Logger, cache *cache.Cache,
 		Cron:            cron,
 		Cfg:             cfg,
 		operationCh:     make(chan *model.OperationsLog),
+		StartTime:       time.Now(),
 	}
 
 	hub.SetErrorHandler(h.WSErrorHandler)

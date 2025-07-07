@@ -1,6 +1,181 @@
-# logs
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+greenlync-api-gateway
+cmd/greenlync-api-gateway
+cmd/vfxserver
 
-logs/*
+# Test binary, built with `go test -c`
+*.test
 
-bins/*
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+coverage.html
+coverage.out
 
+# Dependency directories (remove the comment below to include it)
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Build artifacts
+bins/
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+.tmp
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration files with sensitive data
+config.yaml
+config.json
+secrets.yaml
+
+# Monitoring and profiling
+pprof/
+*.prof
+
+# Generated documentation
+docs/build/
+site/
+
+# Local development certificates
+*.pem
+*.key
+*.crt
+
+# Docker volumes
+docker-volumes/
+
+# Terraform state files (if using Terraform for infrastructure)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubernetes secrets (if using k8s manifests)
+*-secret.yaml
+secret-*.yaml
+
+# Local development overrides
+docker-compose.override.yml
+stack.override.yaml
+
+# Node modules (if any frontend assets)
+node_modules/
+
+# Python bytecode (if any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archives
+*.tar.gz
+*.zip
+*.rar
+
+# Reports and metrics
+reports/
+metrics/
+
+# Cache directories
+.cache/
+.go-cache/
+
+# Local development scripts
+dev-scripts/
+local-scripts/
+
+# Performance test results
+*.bench
+
+# Air live reload tool
+tmp/
+
+# Delve debugger
+__debug_bin
+
+# GoLand IDE
+.idea/
+
+# VS Code settings that should not be shared
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# JetBrains IDEs
+*.iml
+*.ipr
+*.iws
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Local development certificates and keys
+localhost.pem
+localhost-key.pem
+
+# Swagger generated files (if auto-generated)
+docs/swagger.json
+docs/swagger.yaml
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Project-specific ignores
+# Cannabis compliance data (if any sensitive files)
+compliance-data/
+license-data/
+audit-logs/
