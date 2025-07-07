@@ -132,7 +132,7 @@ func seedRolesAndPermissions(dbSess *db.MysqlDB) error {
 		status      string
 	}{
 		{model.RoleType_Admin, "System Administrator", "active"},
-		{model.RoleType_Dispensary, "Basic User Access", "active"},
+		{model.RoleType_User, "Basic User Access", "active"},
 	}
 
 	for _, roleData := range roles {

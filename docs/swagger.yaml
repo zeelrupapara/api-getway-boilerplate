@@ -1,25 +1,1513 @@
-swagger: "2.0"
+basePath: /
+definitions:
+  http.HttpResponse:
+    properties:
+      code:
+        description: Http status Code
+        type: integer
+      data:
+        description: if the request were successful the data will be saved here
+      error:
+        description: Generic General Error Message defined in the system
+        type: string
+      message:
+        description: More detailed error message indicates why the request was unsuccessful
+        type: string
+      success:
+        description: Response flag indicates whether the HTTP request was successful
+          or not
+        type: boolean
+    type: object
+  model.Action:
+    properties:
+      checked:
+        type: boolean
+      desc:
+        type: string
+      id:
+        type: integer
+      resource_id:
+        type: integer
+    type: object
+  model.ChannelType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - ChannelType_Web
+    - ChannelType_Mobile
+    - ChannelType_Desktop
+    - ChannelType_API
+  model.Config:
+    properties:
+      config_group:
+        $ref: '#/definitions/model.ConfigGroup'
+      config_group_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_public:
+        type: boolean
+      key:
+        type: string
+      record_type:
+        $ref: '#/definitions/model.RecordType'
+      updated_at:
+        type: string
+      value:
+        type: string
+      value_type:
+        $ref: '#/definitions/model.ValueType'
+    type: object
+  model.ConfigGroup:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_system:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.Mail:
+    properties:
+      body:
+        description: smtp & in-email & chat
+        type: string
+      common_id:
+        type: string
+      created_at:
+        type: string
+      deleted:
+        type: boolean
+      edited:
+        type: boolean
+      email_tracking_id:
+        type: string
+      from:
+        description: smtp
+        type: string
+      id:
+        type: string
+      original:
+        description: in the admin panel the broker only need to see one version of
+          the email
+        type: boolean
+      owner_id:
+        type: integer
+      read_at:
+        type: string
+      status:
+        $ref: '#/definitions/model.MailStatus'
+      subject:
+        description: smtp & in-email
+        type: string
+      to:
+        description: smtp
+        type: string
+      to_user_id:
+        description: in-email & chat
+        type: integer
+      type:
+        $ref: '#/definitions/model.MailType'
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+      user_id:
+        description: in-email & chat
+        type: integer
+    type: object
+  model.MailStatus:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    type: integer
+    x-enum-varnames:
+    - MailStatus_queue
+    - MailStatus_sent
+    - MailStatus_pending
+    - MailStatus_draft
+    - MailStatus_dropped
+  model.MailType:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-varnames:
+    - MailType_smtp
+    - MailType_notification
+    - MailType_system
+  model.OperationsLog:
+    properties:
+      action:
+        type: string
+      created_at:
+        type: string
+      duration:
+        description: milliseconds
+        type: integer
+      id:
+        type: integer
+      ip_address:
+        type: string
+      method:
+        type: string
+      request_body:
+        type: string
+      resource:
+        type: string
+      resource_id:
+        type: string
+      response:
+        type: string
+      session_id:
+        type: string
+      status_code:
+        type: integer
+      updated_at:
+        type: string
+      url:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+      user_agent:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  model.RecordType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - RecordType_Seed
+    - RecordType_User
+    - RecordType_System
+    - RecordType_Import
+  model.Resource:
+    properties:
+      actions:
+        items:
+          $ref: '#/definitions/model.Action'
+        type: array
+      desc:
+        type: string
+      id:
+        type: integer
+      status:
+        type: string
+      type:
+        $ref: '#/definitions/model.ResourceType'
+    required:
+    - desc
+    - type
+    type: object
+  model.ResourceType:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-varnames:
+    - ResourceType_api
+    - ResourceType_page
+    - ResourceType_screen
+  model.Role:
+    properties:
+      created_at:
+        type: string
+      desc:
+        type: string
+      id:
+        type: integer
+      original:
+        description: Default system Roles (can't be changed) or deleted
+        type: boolean
+      role_type:
+        $ref: '#/definitions/model.RoleType'
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.RoleType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - RoleType_Admin
+    - RoleType_Manager
+    - RoleType_User
+    - RoleType_Viewer
+  model.Session:
+    properties:
+      created_at:
+        type: string
+      finished_at:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      scope:
+        type: string
+      session_id:
+        type: string
+      started_at:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+      user_agent:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  model.Token:
+    properties:
+      access_token:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      expires_in:
+        type: integer
+      id:
+        type: integer
+      ip_address:
+        type: string
+      refresh_token:
+        type: string
+      scope:
+        type: string
+      session_id:
+        type: string
+      token_type:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+      user_agent:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  model.User:
+    properties:
+      address:
+        type: string
+      company_name:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  model.UserType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    type: integer
+    x-enum-varnames:
+    - UserType_Admin
+    - UserType_Manager
+    - UserType_User
+    - UserType_Guest
+    - UserType_API
+  model.ValueType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    type: integer
+    x-enum-varnames:
+    - ValueType_String
+    - ValueType_Integer
+    - ValueType_Boolean
+    - ValueType_Float
+    - ValueType_JSON
+  v1.CrtAction:
+    properties:
+      action:
+        type: string
+      checked:
+        type: boolean
+    type: object
+  v1.CrtRole:
+    properties:
+      desc:
+        example: trader
+        type: string
+      role_type:
+        $ref: '#/definitions/model.RoleType'
+    required:
+    - desc
+    type: object
+  v1.InEmail:
+    properties:
+      body:
+        type: string
+      reply_to:
+        type: string
+      status:
+        $ref: '#/definitions/model.MailStatus'
+      subject:
+        type: string
+      to:
+        items:
+          type: integer
+        type: array
+    required:
+    - body
+    - status
+    - subject
+    - to
+    type: object
+  v1.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      ip_address:
+        type: string
+      refresh_token:
+        type: string
+      scope:
+        type: string
+      session_id:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  v1.OnlineSession:
+    properties:
+      channel:
+        allOf:
+        - $ref: '#/definitions/model.ChannelType'
+        description: Channel
+      client_id:
+        description: User id
+        type: integer
+      full_name:
+        description: Full name
+        type: string
+      id:
+        description: Id of the session
+        type: string
+      ip_address:
+        description: Ip Address
+        type: string
+      session_id:
+        description: Client's session_id
+        type: string
+      started_at:
+        description: StartedAt
+        type: string
+      user_id:
+        description: User Id
+        type: string
+      user_type:
+        allOf:
+        - $ref: '#/definitions/model.UserType'
+        description: UserType
+    type: object
+  v1.Policy:
+    properties:
+      actions:
+        items:
+          $ref: '#/definitions/v1.CrtAction'
+        type: array
+      resource:
+        type: string
+      role:
+        type: string
+    type: object
+  v1.RefreshTokenBody:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+host: localhost:8888
 info:
-  title: "GreenLync API Gateway"
-  description: "GreenLync Cannabis API Gateway"
   contact:
-    name: "API Support"
-    email: "zeelrupapara@gmail.com"
+    email: zeelrupapara@gmail.com
+    name: API Support
+  description: GreenLync Event-Driven API Gateway Boilerplate
   license:
-    name: "GreenLync"
-    url: "https://greenlync.com"
+    name: GreenLync
+    url: https://greenlync.com
+  termsOfService: https://greenlync.com
+  title: GreenLync API Gateway
   version: "1.0"
-host: "localhost:8888"
-basePath: "/"
+paths:
+  /api/v1/accounts/me/policies/ui:
+    get:
+      consumes:
+      - application/json
+      description: Get My Policies in a Map belongs to a Role For UI usage
+      operationId: GetMyPolicies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Accounts
+  /api/v1/configs:
+    get:
+      consumes:
+      - application/json
+      description: Get All Configs
+      operationId: GetAllConfigs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Config'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Config
+  /api/v1/configs/{config_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get Config by ID
+      operationId: GetConfig
+      parameters:
+      - description: Config ID
+        in: path
+        name: config_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Config'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Config
+  /api/v1/configs/groups/{group_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get Configs by Group ID
+      operationId: GetConfigsBelongToGroup
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Config'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Config
+  /api/v1/emails:
+    get:
+      consumes:
+      - application/json
+      description: Get All InEmails
+      operationId: GetAllInEmails
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Mail'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+    post:
+      consumes:
+      - application/json
+      description: Create InEmail
+      operationId: CreateInEmail
+      parameters:
+      - description: InEmail Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.InEmail'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/v1.InEmail'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/emails/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: move Account InEmail to bin then delete it if it's already in the
+        bin
+      operationId: DeleteInEmail
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+    get:
+      consumes:
+      - application/json
+      description: Get InEmail
+      operationId: GetInEmail
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Mail'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+    put:
+      consumes:
+      - application/json
+      description: Update Account InEmail if the status is draft
+      operationId: UpdateInEmail
+      parameters:
+      - description: Email ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: InEmail Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.InEmail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.InEmail'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/emails/me/{tracking_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get Account InEmail Details
+      operationId: GetAccountInEmail
+      parameters:
+      - description: Tracking ID
+        in: path
+        name: tracking_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Mail'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/emails/me/bin:
+    get:
+      consumes:
+      - application/json
+      description: Get Account InEmails Bin
+      operationId: GetAccountBinEmails
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Mail'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/emails/me/draft:
+    get:
+      consumes:
+      - application/json
+      description: Get Account InEmails Draft
+      operationId: GetAccountDraftEmails
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Mail'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/emails/me/inbox:
+    get:
+      consumes:
+      - application/json
+      description: Get Account InEmails Inbox
+      operationId: GetAllAccountInEmails
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Mail'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/emails/me/outbox:
+    get:
+      consumes:
+      - application/json
+      description: Get Account InEmails Mail
+      operationId: GetAllAccountOutEmails
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Mail'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/emails/test:
+    post:
+      consumes:
+      - application/json
+      description: Test SMTP
+      operationId: TestSMTPEmail
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Emails
+  /api/v1/system/operations:
+    delete:
+      consumes:
+      - application/json
+      description: Delete All Operations
+      operationId: DeleteAllOperations
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    get:
+      consumes:
+      - application/json
+      description: Get All Operations
+      operationId: GetAllOperations
+      parameters:
+      - description: search by acccount_id
+        in: query
+        name: account_id
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: limit number
+        in: query
+        name: limit
+        type: integer
+      - description: from date
+        in: query
+        name: from
+        type: string
+      - description: to date
+        in: query
+        name: to
+        type: string
+      - description: sort by
+        in: query
+        name: sort_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.OperationsLog'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/operations/{operation_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Operation
+      operationId: DeleteOperation
+      parameters:
+      - description: Operation ID
+        in: path
+        name: operation_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    get:
+      consumes:
+      - application/json
+      description: Get Operation
+      operationId: GetOperation
+      parameters:
+      - description: Operation ID
+        in: path
+        name: operation_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.OperationsLog'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/policies:
+    post:
+      consumes:
+      - application/json
+      description: Delete Policies
+      operationId: DeletePolicies
+      parameters:
+      - description: Delete Policies Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/v1.Policy'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/policies/{role_id}:
+    post:
+      consumes:
+      - application/json
+      description: Create Policies
+      operationId: CreatePolicies
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: integer
+      - description: Create Policies Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/v1.Policy'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/v1.Policy'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    put:
+      consumes:
+      - application/json
+      description: Update Policies
+      operationId: UpdatePolicies
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: integer
+      - description: Update Policies Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/v1.Policy'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/resources:
+    get:
+      consumes:
+      - application/json
+      description: Get All Resources Defined in the system
+      operationId: GetAllResources
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Resource'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/resources/{role_id}/role:
+    get:
+      consumes:
+      - application/json
+      description: Get All Resources defined in the system with role permission on
+        them
+      operationId: GetAllResourcesWithRole
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Resource'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/roles:
+    get:
+      consumes:
+      - application/json
+      description: Get All System Roles
+      operationId: GetAllRoles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Role'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    post:
+      consumes:
+      - application/json
+      description: Create Role
+      operationId: CreateRole
+      parameters:
+      - description: Role Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CrtRole'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Role'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/roles/{role_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Role
+      operationId: DeleteRole
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    patch:
+      consumes:
+      - application/json
+      description: Update Role
+      operationId: UpdateRole
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: integer
+      - description: Role Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CrtRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Role'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/sessions/active:
+    delete:
+      consumes:
+      - application/json
+      description: Delete All Sessions
+      operationId: DeleteAllSessions
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    get:
+      consumes:
+      - application/json
+      description: Get All Sessions
+      operationId: GetAllSessions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/v1.OnlineSession'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/sessions/active/{session_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Session
+      operationId: DeleteSession
+      parameters:
+      - description: Session ID
+        in: path
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/sessions/history:
+    delete:
+      consumes:
+      - application/json
+      description: Delete All Sessions History
+      operationId: DeleteAllSessionsHistroy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Session'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    get:
+      consumes:
+      - application/json
+      description: Get All Sessions
+      operationId: GetAllSessionsHistroy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Session'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /api/v1/system/tokens/history:
+    delete:
+      consumes:
+      - application/json
+      description: Delete All Token Histroy
+      operationId: DeleteAllTokensHistroy
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+    get:
+      consumes:
+      - application/json
+      description: Get All Tokens Histroy
+      operationId: GetAllTokensHistroy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Token'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - System
+  /auth/v1/oauth2/login:
+    post:
+      consumes:
+      - application/json
+      description: Login using account credentials passed using basic auth method
+      operationId: Login
+      parameters:
+      - description: remember me
+        in: query
+        name: remember_me
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.LoginResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BasicAuth: []
+      tags:
+      - Auth
+  /auth/v1/oauth2/logout:
+    delete:
+      consumes:
+      - application/json
+      description: Logout
+      operationId: Logout
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Auth
+  /auth/v1/oauth2/refresh/token:
+    post:
+      consumes:
+      - application/json
+      description: Refresh account's Token
+      operationId: RefreshToken
+      parameters:
+      - description: Refresh Token Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RefreshTokenBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Token'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      tags:
+      - Auth
+  /auth/v1/oauth2/token:
+    post:
+      consumes:
+      - application/json
+      description: Login using account client_id and client secret passed using basic
+        auth method
+      operationId: Token
+      parameters:
+      - description: either client_credentials or password
+        in: query
+        name: grant_type
+        required: true
+        type: string
+      - description: remember me
+        in: query
+        name: remember_me
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.LoginResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BasicAuth: []
+      tags:
+      - Auth
 schemes:
-  - "http"
-  - "https"
+- http
+- https
 securityDefinitions:
   BasicAuth:
-    type: "basic"
+    type: basic
   BearerAuth:
-    type: "apiKey"
-    name: "Authorization"
-    in: "header"
-    description: "Type \"BearerAuth\" followed by a space and Access token."
-paths: {}
+    description: Type "BearerAuth" followed by a space and Access token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

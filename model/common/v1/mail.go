@@ -38,22 +38,22 @@ var (
 type MailType int32
 
 const (
-	MailType_smtp    MailType = 0
-	MailType_inemail MailType = 1
-	MailType_chat    MailType = 2
+	MailType_smtp         MailType = 0
+	MailType_notification MailType = 1
+	MailType_system       MailType = 2
 )
 
 // Enum value maps for MailStatus.
 var (
 	MailType_name = map[int32]string{
 		0: "smtp",
-		1: "inemail",
-		2: "chat",
+		1: "notification",
+		2: "system",
 	}
 	MailType_value = map[string]int32{
-		"smtp":    0,
-		"inemail": 1,
-		"chat":    2,
+		"smtp":         0,
+		"notification": 1,
+		"system":       2,
 	}
 )
 
@@ -72,10 +72,6 @@ type Mail struct {
 	Deleted         bool       `gorm:"column:deleted" json:"deleted"`
 	Original        bool       `gorm:"column:original" json:"original"` // in the admin panel the broker only need to see one version of the email
 	EmailTrackingId string     `gorm:"column:email_tracking_id" json:"email_tracking_id"`
-	RepliedToId     string     `gorm:"column:replied_to_id" json:"replied_to_id"`
-	ForwardFromId   string     `gorm:"column:forward_from_id" json:"forward_from_id"`
-	Replies         []Mail     `gorm:"foreignKey:RepliedToId" json:"replies"`
-	Forwards        []Mail     `gorm:"foreignKey:ForwardFromId" json:"forwards"`
 	Type            MailType   `gorm:"column:type" json:"type"`
 	Status          MailStatus `gorm:"column:status" json:"status"`
 	User            User       `gorm:"foreignKey:user_id"`

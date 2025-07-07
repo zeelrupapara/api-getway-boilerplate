@@ -51,7 +51,7 @@ type SessionEvent struct {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	LoginResponse
+//	@Success		200	{object}	v1.LoginResponse
 //	@Failure		500	{object}	http.HttpResponse
 //	@Security		BasicAuth
 //	@Authorization:	Basic username:password
@@ -189,7 +189,7 @@ func (s *HttpServer) Login(c *fiber.Ctx) error {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	LoginResponse
+//	@Success		200	{object}	v1.LoginResponse
 //	@Failure		500	{object}	http.HttpResponse
 //	@Security		BasicAuth
 //	@Param			grant_type	query	string	true	"either client_credentials or password"
@@ -333,7 +333,7 @@ type RefreshTokenBody struct {
 //	@Produce		json
 //	@Success		200		{object}	model.Token
 //	@Failure		500		{object}	http.HttpResponse
-//	@Param			body	body		RefreshTokenBody	true	"Refresh Token Request body"
+//	@Param			body	body		v1.RefreshTokenBody	true	"Refresh Token Request body"
 //	@Router			/auth/v1/oauth2/refresh/token [post]
 func (s *HttpServer) RefreshToken(c *fiber.Ctx) error {
 	body := &RefreshTokenBody{}

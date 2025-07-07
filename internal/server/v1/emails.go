@@ -14,19 +14,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// @Id				GetAllInEmails
-// @Description	Get All InEmails
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Mail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/emails [get]
+//	@Id				GetAllInEmails
+//	@Description	Get All InEmails
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Mail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/emails [get]
 func (s *HttpServer) GetAllInEmails(c *fiber.Ctx) error {
 	mail := []*model.Mail{}
 
-	err := s.DB.Where("type = ?", model.MailType_inemail).Find(&mail).Error
+	err := s.DB.Where("type = ?", model.MailType_notification).Find(&mail).Error
 	if err != nil {
 		return s.App.HttpResponseInternalServerErrorRequest(c, err)
 	}
@@ -34,15 +34,15 @@ func (s *HttpServer) GetAllInEmails(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, mail)
 }
 
-// @Id				GetAllAccountInEmails
-// @Description	Get Account InEmails Inbox
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Mail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/emails/me/inbox [get]
+//	@Id				GetAllAccountInEmails
+//	@Description	Get Account InEmails Inbox
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Mail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/emails/me/inbox [get]
 func (s *HttpServer) GetAllAccountInEmails(c *fiber.Ctx) error {
 	mail := []*model.Mail{}
 
@@ -54,7 +54,7 @@ func (s *HttpServer) GetAllAccountInEmails(c *fiber.Ctx) error {
 	// email_tracking_id
 	err := s.DB.
 		Where("type = ? AND status = ? AND owner_id = ? AND to_account_id = ? AND deleted = false",
-			model.MailType_inemail, model.MailStatus_sent, client.ClientId, client.ClientId).
+			model.MailType_notification, model.MailStatus_sent, client.ClientId, client.ClientId).
 		Order("created_at DESC").Find(&mail).Error
 	if err != nil {
 		return s.App.HttpResponseInternalServerErrorRequest(c, err)
@@ -75,15 +75,15 @@ func (s *HttpServer) GetAllAccountInEmails(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, filterdInbox)
 }
 
-// @Id				GetAllAccountOutEmails
-// @Description	Get Account InEmails Mail
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Mail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/emails/me/outbox [get]
+//	@Id				GetAllAccountOutEmails
+//	@Description	Get Account InEmails Mail
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Mail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/emails/me/outbox [get]
 func (s *HttpServer) GetAllAccountOutEmails(c *fiber.Ctx) error {
 	mail := []*model.Mail{}
 
@@ -94,7 +94,7 @@ func (s *HttpServer) GetAllAccountOutEmails(c *fiber.Ctx) error {
 
 	err := s.DB.
 		Where("type = ? AND status = ? AND owner_id = ? AND account_id = ?  AND deleted = false",
-			model.MailType_inemail, model.MailStatus_sent, client.ClientId, client.ClientId).
+			model.MailType_notification, model.MailStatus_sent, client.ClientId, client.ClientId).
 		Order("created_at DESC").Find(&mail).Error
 	if err != nil {
 		return s.App.HttpResponseInternalServerErrorRequest(c, err)
@@ -115,15 +115,15 @@ func (s *HttpServer) GetAllAccountOutEmails(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, filterdInbox)
 }
 
-// @Id				GetAccountDraftEmails
-// @Description	Get Account InEmails Draft
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Mail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/emails/me/draft [get]
+//	@Id				GetAccountDraftEmails
+//	@Description	Get Account InEmails Draft
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Mail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/emails/me/draft [get]
 func (s *HttpServer) GetAccountDraftEmails(c *fiber.Ctx) error {
 	mail := []*model.Mail{}
 
@@ -134,7 +134,7 @@ func (s *HttpServer) GetAccountDraftEmails(c *fiber.Ctx) error {
 
 	err := s.DB.
 		Where("type = ? AND status = ? AND owner_id = ? AND account_id = ? AND deleted = false",
-			model.MailType_inemail, model.MailStatus_draft, client.ClientId, client.ClientId).
+			model.MailType_notification, model.MailStatus_draft, client.ClientId, client.ClientId).
 		Order("created_at DESC").Find(&mail).Error
 	if err != nil {
 		return s.App.HttpResponseInternalServerErrorRequest(c, err)
@@ -155,15 +155,15 @@ func (s *HttpServer) GetAccountDraftEmails(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, filterdInbox)
 }
 
-// @Id				GetAccountBinEmails
-// @Description	Get Account InEmails Bin
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Mail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/emails/me/bin [get]
+//	@Id				GetAccountBinEmails
+//	@Description	Get Account InEmails Bin
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Mail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/emails/me/bin [get]
 func (s *HttpServer) GetAccountBinEmails(c *fiber.Ctx) error {
 	mail := []*model.Mail{}
 
@@ -174,7 +174,7 @@ func (s *HttpServer) GetAccountBinEmails(c *fiber.Ctx) error {
 
 	err := s.DB.
 		Where("type = ? AND owner_id = ? AND deleted = true",
-			model.MailType_inemail, client.ClientId).
+			model.MailType_notification, client.ClientId).
 		// Where("common_id IS NULL OR common_id NOT IN (SELECT DISTINCT replied_to_id FROM vfxMail WHERE replied_to_id IS NOT NULL)").
 		Order("created_at DESC").Find(&mail).Error
 	if err != nil {
@@ -196,16 +196,16 @@ func (s *HttpServer) GetAccountBinEmails(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, filterdInbox)
 }
 
-// @Id				GetInEmail
-// @Description	Get InEmail
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	model.Mail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			id	path	string	true	"ID"
-// @Router			/api/v1/emails/{id} [get]
+//	@Id				GetInEmail
+//	@Description	Get InEmail
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	model.Mail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			id	path	string	true	"ID"
+//	@Router			/api/v1/emails/{id} [get]
 func (s *HttpServer) GetInEmail(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -213,7 +213,7 @@ func (s *HttpServer) GetInEmail(c *fiber.Ctx) error {
 	}
 
 	mail := &model.Mail{}
-	err := s.DB.Where(&model.Mail{Id: id, Type: model.MailType_inemail}).Preload("Replies").First(mail).Error
+	err := s.DB.Where(&model.Mail{Id: id, Type: model.MailType_notification}).Preload("Replies").First(mail).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return s.App.HttpResponseNotFound(c, err)
@@ -224,16 +224,16 @@ func (s *HttpServer) GetInEmail(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, mail)
 }
 
-// @Id				GetAccountInEmail
-// @Description	Get Account InEmail Details
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Mail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			tracking_id	path	string	true	"Tracking ID"
-// @Router			/api/v1/emails/me/{tracking_id} [get]
+//	@Id				GetAccountInEmail
+//	@Description	Get Account InEmail Details
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Mail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			tracking_id	path	string	true	"Tracking ID"
+//	@Router			/api/v1/emails/me/{tracking_id} [get]
 func (s *HttpServer) GetAccountInEmail(c *fiber.Ctx) error {
 	trackingId := c.Params("tracking_id")
 	if trackingId == "" {
@@ -247,7 +247,7 @@ func (s *HttpServer) GetAccountInEmail(c *fiber.Ctx) error {
 
 	mail := &[]*model.Mail{}
 	err := s.DB.Where("type = ? AND status = ? AND email_tracking_id = ? AND owner_id = ?  AND deleted = false",
-		model.MailType_inemail, model.MailStatus_sent, trackingId, client.ClientId).Order("created_at DESC").Find(mail).Error
+		model.MailType_notification, model.MailStatus_sent, trackingId, client.ClientId).Order("created_at DESC").Find(mail).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return s.App.HttpResponseNotFound(c, err)
@@ -270,16 +270,16 @@ type InEmail struct {
 	Status   model.MailStatus `json:"status" validate:"required"`
 }
 
-// @Id				CreateInEmail
-// @Description	Create InEmail
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		201	{object}	InEmail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			body	body	InEmail	true	"InEmail Request Body"
-// @Router			/api/v1/emails [post]
+//	@Id				CreateInEmail
+//	@Description	Create InEmail
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		201	{object}	v1.InEmail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			body	body	v1.InEmail	true	"InEmail Request Body"
+//	@Router			/api/v1/emails [post]
 func (s *HttpServer) CreateInEmail(c *fiber.Ctx) error {
 	data := &InEmail{}
 	err := c.BodyParser(data)
@@ -335,12 +335,11 @@ func (s *HttpServer) CreateInEmail(c *fiber.Ctx) error {
 			UserId:          cfg.ClientId,
 			ToUserId:        data.ToUserId[i],
 			Subject:         data.Subject,
-			RepliedToId:     data.ReplyTo,
 			Body:            data.Body,
 			Status:          data.Status,
 			OwnerId:         cfg.ClientId,
 			Original:        true,
-			Type:            model.MailType_inemail,
+			Type:            model.MailType_notification,
 			EmailTrackingId: trackingId,
 		}
 		toEmail := *originalEmail
@@ -401,17 +400,17 @@ func (s *HttpServer) CreateInEmail(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, emails[0])
 }
 
-// @Id				UpdateInEmail
-// @Description	Update Account InEmail if the status is draft
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	InEmail
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			id		path	string	true	"Email ID"
-// @Param			body	body	InEmail	true	"InEmail Request Body"
-// @Router			/api/v1/emails/{id} [put]
+//	@Id				UpdateInEmail
+//	@Description	Update Account InEmail if the status is draft
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	v1.InEmail
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			id		path	string		true	"Email ID"
+//	@Param			body	body	v1.InEmail	true	"InEmail Request Body"
+//	@Router			/api/v1/emails/{id} [put]
 func (s *HttpServer) UpdateInEmail(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -436,7 +435,7 @@ func (s *HttpServer) UpdateInEmail(c *fiber.Ctx) error {
 
 	draftEmail := &model.Mail{}
 	err = s.DB.Where("type = ? AND id = ? AND account_id = ?",
-		model.MailType_inemail, id, cfg.ClientId).First(draftEmail).Error
+		model.MailType_notification, id, cfg.ClientId).First(draftEmail).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return s.App.HttpResponseNotFound(c, err)
@@ -467,7 +466,7 @@ func (s *HttpServer) UpdateInEmail(c *fiber.Ctx) error {
 
 	tx := s.DB.Begin()
 	err = tx.Where("type = ? AND common_id = ? AND account_id = ?",
-		model.MailType_inemail, draftEmail.CommonId, cfg.ClientId).Delete(&model.Mail{}).Error
+		model.MailType_notification, draftEmail.CommonId, cfg.ClientId).Delete(&model.Mail{}).Error
 	if err != nil {
 		tx.Rollback()
 		return s.App.HttpResponseInternalServerErrorRequest(c, err)
@@ -481,12 +480,11 @@ func (s *HttpServer) UpdateInEmail(c *fiber.Ctx) error {
 			UserId:          cfg.ClientId,
 			ToUserId:        data.ToUserId[i],
 			Subject:         data.Subject,
-			RepliedToId:     data.ReplyTo,
 			Body:            data.Body,
 			Status:          data.Status,
 			OwnerId:         cfg.ClientId,
 			Original:        true,
-			Type:            model.MailType_inemail,
+			Type:            model.MailType_notification,
 			EmailTrackingId: trackingId,
 		}
 		toEmail := *originalEmail
@@ -547,16 +545,16 @@ func (s *HttpServer) UpdateInEmail(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, emails[0])
 }
 
-// @Id				DeleteInEmail
-// @Description	move Account InEmail to bin then delete it if it's already in the bin
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		204
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			id	path	string	true	"ID"
-// @Router			/api/v1/emails/{id} [DELETE]
+//	@Id				DeleteInEmail
+//	@Description	move Account InEmail to bin then delete it if it's already in the bin
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		204
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			id	path	string	true	"ID"
+//	@Router			/api/v1/emails/{id} [DELETE]
 func (s *HttpServer) DeleteInEmail(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -569,7 +567,7 @@ func (s *HttpServer) DeleteInEmail(c *fiber.Ctx) error {
 	}
 
 	mail := &model.Mail{}
-	err := s.DB.Where("type = ? AND owner_id = ? AND id = ?", model.MailType_inemail, cfg.ClientId, id).First(mail).Error
+	err := s.DB.Where("type = ? AND owner_id = ? AND id = ?", model.MailType_notification, cfg.ClientId, id).First(mail).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return s.App.HttpResponseNotFound(c, err)
@@ -589,7 +587,7 @@ func (s *HttpServer) DeleteInEmail(c *fiber.Ctx) error {
 
 	if mail.Status == model.MailStatus_draft {
 		err = tx.Where("type = ? AND common_id = ? AND user_id = ?",
-			model.MailType_inemail, mail.CommonId, cfg.ClientId).Delete(&model.Mail{}).Error
+			model.MailType_notification, mail.CommonId, cfg.ClientId).Delete(&model.Mail{}).Error
 		if err != nil {
 			tx.Rollback()
 			return s.App.HttpResponseInternalServerErrorRequest(c, err)
@@ -633,15 +631,15 @@ func (s *HttpServer) DeleteInEmail(c *fiber.Ctx) error {
 	return s.App.HttpResponseNoContent(c)
 }
 
-// @Id				TestSMTPEmail
-// @Description	Test SMTP
-// @Tags			Emails
-// @Accept			json
-// @Produce		json
-// @Success		204
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/emails/test [post]
+//	@Id				TestSMTPEmail
+//	@Description	Test SMTP
+//	@Tags			Emails
+//	@Accept			json
+//	@Produce		json
+//	@Success		204
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/emails/test [post]
 func (s *HttpServer) TestSMTPEmail(c *fiber.Ctx) error {
 	email := ""
 	err := c.BodyParser(&email)

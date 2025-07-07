@@ -81,7 +81,7 @@ func (s *HttpServer) UpdateConfig(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{array}		model.Config
-//	@Failure		500	{object}	http.Response
+//	@Failure		500	{object}	http.HttpResponse
 //	@Security		BearerAuth
 //	@Router			/api/v1/configs [get]
 func (s *HttpServer) GetAllConfigs(c *fiber.Ctx) error {
@@ -94,15 +94,14 @@ func (s *HttpServer) GetAllConfigs(c *fiber.Ctx) error {
 
 	return s.App.HttpResponseOK(c, configs)
 }
-
 //	@Id				GetConfig
 //	@Description	Get Config by ID
 //	@Tags			Config
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	model.Config
-//	@Failure		404	{object}	http.Response
-//	@Failure		500	{object}	http.Response
+//	@Failure		404	{object}	http.HttpResponse
+//	@Failure		500	{object}	http.HttpResponse
 //	@Security		BearerAuth
 //	@Param			config_id	path	int	true	"Config ID"
 //	@Router			/api/v1/configs/{config_id} [get]
@@ -131,7 +130,7 @@ func (s *HttpServer) GetConfig(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{array}		model.Config
-//	@Failure		500	{object}	http.Response
+//	@Failure		500	{object}	http.HttpResponse
 //	@Security		BearerAuth
 //	@Param			group_id	path	int	true	"Group ID"
 //	@Router			/api/v1/configs/groups/{group_id} [get]

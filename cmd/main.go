@@ -9,7 +9,7 @@ import (
 
 // @title						GreenLync API Gateway
 // @version					1.0
-// @description				GreenLync Cannabis API Gateway
+// @description				GreenLync Event-Driven API Gateway Boilerplate
 // @termsOfService				https://greenlync.com
 // @contact.name				API Support
 // @contact.email				zeelrupapara@gmail.com

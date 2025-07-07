@@ -78,7 +78,7 @@ func NewMysqDB(cfg *config.Config) (*MysqlDB, error) {
 		SkipDefaultTransaction:                   true, // Disable automatic transactions for read-only operations
 
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "vfx_",
+			TablePrefix:   "greenlync_",
 			SingularTable: true,
 			NoLowerCase:   true,
 		},

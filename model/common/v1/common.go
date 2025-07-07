@@ -31,7 +31,6 @@ type User struct {
 	PasswordHash string `gorm:"column:password_hash;type:varchar(255)" json:"-"`
 	Role         string `gorm:"column:role;type:varchar(50)" json:"role"`
 	IsActive     bool   `gorm:"column:is_active;default:true" json:"is_active"`
-	LicenseId    string `gorm:"column:license_id;type:varchar(100)" json:"license_id,omitempty"`
 	CompanyName  string `gorm:"column:company_name;type:varchar(255)" json:"company_name,omitempty"`
 	Phone        string `gorm:"column:phone;type:varchar(20)" json:"phone,omitempty"`
 	Address      string `gorm:"column:address;type:text" json:"address,omitempty"`
@@ -143,10 +142,6 @@ const (
 	EventType_EmailDraft      EventType = 35
 	EventType_EmailOutbox     EventType = 36
 
-	// Compliance Events (for future use)
-	EventType_ComplianceCheck  EventType = 40
-	EventType_ComplianceUpdate EventType = 41
-	EventType_ComplianceAlert  EventType = 42
 )
 
 // Event type mappings for serialization
@@ -173,9 +168,6 @@ var EventType_name = map[int32]string{
 	34: "report_generated",
 	35: "email_draft",
 	36: "email_outbox",
-	40: "compliance_check",
-	41: "compliance_update",
-	42: "compliance_alert",
 }
 
 var EventType_value = map[string]int32{
@@ -201,9 +193,6 @@ var EventType_value = map[string]int32{
 	"report_generated":   34,
 	"email_draft":        35,
 	"email_outbox":       36,
-	"compliance_check":   40,
-	"compliance_update":  41,
-	"compliance_alert":   42,
 }
 
 // ErrorPayload represents structured error information for events
@@ -337,15 +326,6 @@ type OperationsLog struct {
 // BUSINESS-SPECIFIC MODELS (EXTENSIBLE)
 // ============================================================================
 
-// ComplianceCategory represents compliance categories for business rules
-type ComplianceCategory struct {
-	Id          int32  `gorm:"primaryKey;column:id" json:"id"`
-	Name        string `gorm:"uniqueIndex;column:name;type:varchar(191)" json:"name"`
-	Description string `gorm:"column:description;type:text" json:"description"`
-	IsMandatory bool   `gorm:"column:is_mandatory;default:false" json:"is_mandatory"`
-	IsActive    bool   `gorm:"column:is_active;default:true" json:"is_active"`
-	CommonModel
-}
 
 // ============================================================================
 // HELPER FUNCTIONS

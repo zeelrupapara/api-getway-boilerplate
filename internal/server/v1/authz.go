@@ -28,15 +28,15 @@ type Policy struct {
 // ************************ Roles *********************************************
 // ****************************************************************************
 
-// @Id				GetAllRoles
-// @Description	Get All System Roles
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Role
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/system/roles [get]
+//	@Id				GetAllRoles
+//	@Description	Get All System Roles
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Role
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/system/roles [get]
 func (s *HttpServer) GetAllRoles(c *fiber.Ctx) error {
 	roles := []model.Role{}
 	err := s.DB.Find(&roles).Error
@@ -52,17 +52,17 @@ type CrtRole struct {
 	RoleType model.RoleType `json:"role_type"`
 }
 
-// @Id				CreateRole
-// @Description	Create Role
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		201	{object}	model.Role
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			body	body	CrtRole	true	"Role Request Body"
-// @Router			/api/v1/system/roles [post]
-// @Hidden
+//	@Id				CreateRole
+//	@Description	Create Role
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		201	{object}	model.Role
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			body	body	v1.CrtRole	true	"Role Request Body"
+//	@Router			/api/v1/system/roles [post]
+//	@Hidden
 func (s *HttpServer) CreateRole(c *fiber.Ctx) error {
 	data := &CrtRole{}
 	err := c.BodyParser(data)
@@ -86,17 +86,17 @@ type UptRole struct {
 	Desc string `json:"desc" validate:"required"`
 }
 
-// @Id				UpdateRole
-// @Description	Update Role
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	model.Role
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			role_id	path	int		true	"Role ID"
-// @Param			body	body	CrtRole	true	"Role Request Body"
-// @Router			/api/v1/system/roles/{role_id} [patch]
+//	@Id				UpdateRole
+//	@Description	Update Role
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	model.Role
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			role_id	path	int			true	"Role ID"
+//	@Param			body	body	v1.CrtRole	true	"Role Request Body"
+//	@Router			/api/v1/system/roles/{role_id} [patch]
 func (s *HttpServer) UpdateRole(c *fiber.Ctx) error {
 	roleId, err := c.ParamsInt("role_id")
 	if err != nil {
@@ -164,16 +164,16 @@ func (s *HttpServer) UpdateRole(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, role)
 }
 
-// @Id				DeleteRole
-// @Description	Delete Role
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		204
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			role_id	path	int	true	"Role ID"
-// @Router			/api/v1/system/roles/{role_id} [DELETE]
+//	@Id				DeleteRole
+//	@Description	Delete Role
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		204
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			role_id	path	int	true	"Role ID"
+//	@Router			/api/v1/system/roles/{role_id} [DELETE]
 func (s *HttpServer) DeleteRole(c *fiber.Ctx) error {
 	roleId, err := c.ParamsInt("role_id")
 	if err != nil {
@@ -229,15 +229,15 @@ func (s *HttpServer) DeleteRole(c *fiber.Ctx) error {
 // ************************ Resources *****************************************
 // ****************************************************************************
 
-// @Id				GetAllResources
-// @Description	Get All Resources Defined in the system
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Resource
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/system/resources [get]
+//	@Id				GetAllResources
+//	@Description	Get All Resources Defined in the system
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Resource
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/system/resources [get]
 func (s *HttpServer) GetAllResources(c *fiber.Ctx) error {
 	resources := []model.Resource{}
 	err := s.DB.Preload("Actions").Find(&resources).Error
@@ -247,16 +247,16 @@ func (s *HttpServer) GetAllResources(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, &resources)
 }
 
-// @Id				GetAllResourcesWithRole
-// @Description	Get All Resources defined in the system with role permission on them
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}		model.Resource
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			role_id	path	int	true	"Role ID"
-// @Router			/api/v1/system/resources/{role_id}/role [get]
+//	@Id				GetAllResourcesWithRole
+//	@Description	Get All Resources defined in the system with role permission on them
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		model.Resource
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			role_id	path	int	true	"Role ID"
+//	@Router			/api/v1/system/resources/{role_id}/role [get]
 func (s *HttpServer) GetAllResourcesWithRole(c *fiber.Ctx) error {
 	roleId, err := c.ParamsInt("role_id")
 	if err != nil {
@@ -300,15 +300,15 @@ func (s *HttpServer) GetAllResourcesWithRole(c *fiber.Ctx) error {
 // ************************ Policies ******************************************
 // ****************************************************************************
 
-// @Id				GetMyPolicies
-// @Description	Get My Policies in a Map belongs to a Role For UI usage
-// @Tags			Accounts
-// @Accept			json
-// @Produce		json
-// @Success		200	{object}	map[string]bool
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Router			/api/v1/accounts/me/policies/ui [get]
+//	@Id				GetMyPolicies
+//	@Description	Get My Policies in a Map belongs to a Role For UI usage
+//	@Tags			Accounts
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]bool
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/accounts/me/policies/ui [get]
 func (s *HttpServer) GetMyPolicies(c *fiber.Ctx) error {
 	client, ok := utils.GetClient(c)
 	if !ok {
@@ -349,17 +349,17 @@ func (s *HttpServer) GetMyPolicies(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, policiesMap)
 }
 
-// @Id				CreatePolicies
-// @Description	Create Policies
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		201	{array}		Policy
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			role_id	path	int			true	"Role ID"
-// @Param			body	body	[]Policy	true	"Create Policies Request body"
-// @Router			/api/v1/system/policies/{role_id} [post]
+//	@Id				CreatePolicies
+//	@Description	Create Policies
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		201	{array}		v1.Policy
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			role_id	path	int			true	"Role ID"
+//	@Param			body	body	[]v1.Policy	true	"Create Policies Request body"
+//	@Router			/api/v1/system/policies/{role_id} [post]
 func (s *HttpServer) CreatePolicies(c *fiber.Ctx) error {
 	roleId, err := c.ParamsInt("role_id")
 	if err != nil {
@@ -423,17 +423,17 @@ func (s *HttpServer) CreatePolicies(c *fiber.Ctx) error {
 	return s.App.HttpResponseCreated(c, &policies)
 }
 
-// @Id				UpdatePolicies
-// @Description	Update Policies
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		200	boolean		boolean
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			role_id	path	int			true	"Role ID"
-// @Param			body	body	[]Policy	true	"Update Policies Request body"
-// @Router			/api/v1/system/policies/{role_id} [put]
+//	@Id				UpdatePolicies
+//	@Description	Update Policies
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	boolean		boolean
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			role_id	path	int			true	"Role ID"
+//	@Param			body	body	[]v1.Policy	true	"Update Policies Request body"
+//	@Router			/api/v1/system/policies/{role_id} [put]
 func (s *HttpServer) UpdatePolicies(c *fiber.Ctx) error {
 	roleId, err := c.ParamsInt("role_id")
 	if err != nil {
@@ -503,16 +503,16 @@ func (s *HttpServer) UpdatePolicies(c *fiber.Ctx) error {
 	return s.App.HttpResponseOK(c, updated)
 }
 
-// @Id				DeletePolicies
-// @Description	Delete Policies
-// @Tags			System
-// @Accept			json
-// @Produce		json
-// @Success		204
-// @Failure		500	{object}	http.HttpResponse
-// @Security		BearerAuth
-// @Param			body	body	[]Policy	true	"Delete Policies Request body"
-// @Router			/api/v1/system/policies [POST]
+//	@Id				DeletePolicies
+//	@Description	Delete Policies
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		204
+//	@Failure		500	{object}	http.HttpResponse
+//	@Security		BearerAuth
+//	@Param			body	body	[]v1.Policy	true	"Delete Policies Request body"
+//	@Router			/api/v1/system/policies [POST]
 func (s *HttpServer) DeletePolicies(c *fiber.Ctx) error {
 	policies := []Policy{}
 	err := c.BodyParser(&policies)

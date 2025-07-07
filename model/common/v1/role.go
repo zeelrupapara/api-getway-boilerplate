@@ -4,28 +4,25 @@ package model
 type RoleType int32
 
 const (
-	RoleType_Admin      RoleType = 0
-	RoleType_Dispensary RoleType = 1
-	RoleType_Cultivator RoleType = 2
-	RoleType_Processor  RoleType = 3
-	RoleType_Auditor    RoleType = 4
+	RoleType_Admin    RoleType = 0
+	RoleType_Manager  RoleType = 1
+	RoleType_User     RoleType = 2
+	RoleType_Viewer   RoleType = 3
 )
 
 // Enum value maps for RoleType.
 var (
 	RoleType_name = map[int32]string{
 		0: "admin",
-		1: "dispensary",
-		2: "cultivator",
-		3: "processor",
-		4: "auditor",
+		1: "manager",
+		2: "user",
+		3: "viewer",
 	}
 	RoleType_value = map[string]int32{
-		"admin":      0,
-		"dispensary": 1,
-		"cultivator": 2,
-		"processor":  3,
-		"auditor":    4,
+		"admin":   0,
+		"manager": 1,
+		"user":    2,
+		"viewer":  3,
 	}
 )
 

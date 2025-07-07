@@ -1,5 +1,5 @@
 // Developer: zeelrupapara@gmail.com
-// Description: Cannabis compliance API routes for GreenLync
+// Description: API routes for GreenLync Event-Driven API Gateway Boilerplate
 
 package v1
 
@@ -129,8 +129,8 @@ func (s *HttpServer) RegisterV1() {
 		URL:  "/static/manifest/favicon.ico",
 	}))
 
-	// Swagger
-	root.Get("/swagger/*", s.Middleware.ProtectStatic, swagger.HandlerDefault)
+	// Swagger - Public access for development
+	root.Get("/swagger/*", swagger.HandlerDefault)
 
 	// API Docs
 	apiDocs := root.Group("/api/docs")

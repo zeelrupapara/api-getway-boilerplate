@@ -3394,3 +3394,20 @@
 {"level":"error","ts":1751854466.358517,"msg":"SMTP Health Error [Dial]: dial tcp: lookup smtp.gmail.com: Temporary failure in name resolution"}
 {"level":"error","ts":1751854476.358501,"msg":"SMTP Health Error [Dial]: dial tcp: lookup smtp.gmail.com: Temporary failure in name resolution"}
 {"level":"info","ts":1751854481.0218334,"msg":"Server shutdown completed"}
+{"level":"info","ts":1751855909.0675042,"msg":"Starting database seeding..."}
+{"level":"info","ts":1751855910.9850717,"msg":"Database seeding completed successfully!"}
+{"level":"info","ts":1751855974.2088115,"msg":"Logging started for service: greenlync-api-gateway@v1.0.0"}
+{"level":"info","ts":1751855974.2105255,"msg":"Connected to redis 127.0.0.1:6379"}
+{"level":"info","ts":1751855977.0483766,"msg":"Server shutdown completed"}
+{"level":"info","ts":1751856707.1329484,"msg":"Logging started for service: greenlync-api-gateway@v1.0.0"}
+{"level":"info","ts":1751856707.135122,"msg":"Connected to redis 127.0.0.1:6379"}
+{"level":"error","ts":1751856711.0595655,"msg":"SMTP Health Error [AUTH]: 535 5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-23c84597219sm73405585ad.203 - gsmtp"}
+{"level":"info","ts":1751856715.0071213,"msg":"Server shutdown completed"}
+{"level":"info","ts":1751856750.5847852,"msg":"Logging started for service: greenlync-api-gateway@v1.0.0"}
+{"level":"info","ts":1751856750.5857682,"msg":"Connected to redis 127.0.0.1:6379"}
+{"level":"error","ts":1751856753.8267608,"msg":"SMTP Health Error [AUTH]: 535 5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-74ce359d0b6sm7974599b3a.5 - gsmtp"}
+{"level":"info","ts":1751856756.7070386,"msg":"Server shutdown completed"}
+{"level":"info","ts":1751856819.4485457,"msg":"Logging started for service: greenlync-api-gateway@v1.0.0"}
+{"level":"info","ts":1751856819.4509645,"msg":"Connected to redis 127.0.0.1:6379"}
+{"level":"error","ts":1751856822.7218554,"msg":"SMTP Health Error [AUTH]: 535 5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-74ce359d629sm7955968b3a.3 - gsmtp"}
+{"level":"error","ts":1751856833.0359662,"msg":"SMTP Health Error [AUTH]: 535 5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-74ce359df4bsm7982630b3a.21 - gsmtp"}

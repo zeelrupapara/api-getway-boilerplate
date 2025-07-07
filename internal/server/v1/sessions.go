@@ -40,7 +40,7 @@ type OnlineSession struct {
 // @Tags			System
 // @Accept			json
 // @Produce		json
-// @Success		200	{array}		OnlineSession
+// @Success		200	{array}		v1.OnlineSession
 // @Failure		500	{object}	http.HttpResponse
 // @Security		BearerAuth
 // @Router			/api/v1/system/sessions/active [get]
