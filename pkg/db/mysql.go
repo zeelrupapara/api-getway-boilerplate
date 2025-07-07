@@ -106,7 +106,7 @@ func NewMysqDB(cfg *config.Config) (*MysqlDB, error) {
 
 // Migrate when you change your model, called from main only
 func (db *MysqlDB) Migrate() error {
-	// Core models for cannabis compliance
+	// Core models for boilerplate
 	if err := db.DB.AutoMigrate(&model.User{}, &model.Role{}, &model.Permission{}); err != nil {
 		return err
 	}
@@ -122,10 +122,6 @@ func (db *MysqlDB) Migrate() error {
 	if err := db.DB.AutoMigrate(&model.Mail{}, &model.Inbox{}); err != nil {
 		return err
 	}
-	// Cannabis compliance
-	if err := db.DB.AutoMigrate(&model.ComplianceCategory{}); err != nil {
-		return err
-	}
 	// Events and monitoring
 	if err := db.DB.AutoMigrate(&model.Event{}, &model.OperationsLog{}); err != nil {
 		return err
@@ -136,7 +132,7 @@ func (db *MysqlDB) Migrate() error {
 
 
 func (db *MysqlDB) ValidateDBData() error {
-	// Cannabis boilerplate - simplified validation
+	// Boilerplate - simplified validation
 	// Check if we have at least one user
 	var userCount int64
 	err := db.DB.Model(&model.User{}).Count(&userCount).Error
@@ -162,9 +158,9 @@ func (db *MysqlDB) ValidateDBData() error {
 	return nil
 }
 
-// AlterTableIds - Cannabis boilerplate stub (no longer needed)
+// AlterTableIds - Boilerplate stub (no longer needed)
 func (db *MysqlDB) AlterTableIds() error {
-	// This function is not needed for cannabis compliance system
+	// This function is not needed for boilerplate system
 	// Keeping as stub for backward compatibility
 	return nil
 }
