@@ -1,0 +1,416 @@
+{
+  "actions": [
+    {
+      "action_label": "Delay in milliseconds",
+      "action_type": "number",
+      "action_value": 0
+    },
+    {
+      "action_label": "Clear TP",
+      "action_type": "string",
+      "action_value": ""
+    },
+    {
+      "action_label": "Clear SL",
+      "action_type": "string",
+      "action_value": ""
+    },
+    {
+      "action_label": "Clear SLTP",
+      "action_type": "string",
+      "action_value": ""
+    },
+    {
+      "action_label": "Reject",
+      "action_type": "string",
+      "action_value": ""
+    },
+    {
+      "action_label": "Cancel Order",
+      "action_type": "string",
+      "action_value": ""
+    }
+  ],
+  "conditions": [
+    {
+      "category_name": "accounts",
+      "category_label": "Accounts",
+      "table_name": "vfx_Account",
+      "fields": [
+        {
+          "field_name": "id",
+          "field_label": "ID",
+          "value_type": "number",
+          "input_type": "account",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        },
+        {
+          "field_name": "account_type",
+          "field_label": "Type",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Client Account"},
+            {"value": 1, "label": "Admin Account"},
+            {"value": 2, "label": "Dealer Account"}
+          ]
+        },
+        {
+          "field_name": "trade_type",
+          "field_label": "Mode",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Normal"},
+            {"value": 1, "label": "Demo"}
+          ]
+        },
+        {
+          "field_name": "status",
+          "field_label": "Status",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Read Only"},
+            {"value": 1, "label": "Pending"},
+            {"value": 2, "label": "Active"},
+            {"value": 3, "label": "Rejected"},
+            {"value": 4, "label": "Liquidation"},
+            {"value": 5, "label": "Liquidated"}
+          ]
+        },
+        {
+          "field_name": "leverage",
+          "field_label": "Leverage",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        },
+        {
+          "field_name": "equity",
+          "field_label": "Equity",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "SUM",
+          "enum_values": []
+        },
+        {
+          "field_name": "margin_level",
+          "field_label": "Margin Level %",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        },
+        {
+          "field_name": "balance",
+          "field_label": "Balance",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "SUM",
+          "enum_values": []
+        },
+        {
+          "field_name": "floating_profit",
+          "field_label": "Floating P&L",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "SUM",
+          "enum_values": []
+        },
+        {
+          "field_name": "group_id",
+          "field_label": "Group",
+          "value_type": "number",
+          "input_type": "group",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        }
+      ]
+    },
+    {
+      "category_name": "groups",
+      "category_label": "Groups",
+      "table_name": "vfx_Group",
+      "fields": [
+        {
+          "field_name": "id",
+          "field_label": "ID",
+          "value_type": "number",
+          "input_type": "group",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        },
+        {
+          "field_name": "group_type",
+          "field_label": "Type",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Client Group"},
+            {"value": 1, "label": "Admin Group"}
+          ]
+        },
+        {
+          "field_name": "status",
+          "field_label": "Status",
+          "value_type": "string",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        },
+        {
+          "field_name": "manager_id",
+          "field_label": "Manager",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        }
+      ]
+    },
+    {
+      "category_name": "symbols",
+      "category_label": "Symbols",
+      "table_name": "vfx_Symbol",
+      "fields": [
+        {
+          "field_name": "symbol",
+          "field_label": "Name",
+          "value_type": "string",
+          "input_type": "symbol",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": []
+        },
+        {
+          "field_name": "status",
+          "field_label": "Status",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Enable"},
+            {"value": 1, "label": "Disable"},
+            {"value": 2, "label": "Trade Closed Quote Closed"},
+            {"value": 3, "label": "Trade Closed Quote Opened"},
+            {"value": 4, "label": "Trade Opened Quote Closed"},
+            {"value": 5, "label": "Timeout Expired"},
+            {"value": 6, "label": "Time Limit Expired"}
+          ]
+        },
+        {
+          "field_name": "trade_level",
+          "field_label": "Trade Level",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Full"},
+            {"value": 1, "label": "Buy"},
+            {"value": 2, "label": "Sell"},
+            {"value": 3, "label": "Close"},
+            {"value": 4, "label": "Disabled"}
+          ]
+        },
+        {
+          "field_name": "digits",
+          "field_label": "Digits",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": ["=", "!=", ">", ">=", "<", "<="],
+          "aggregation": "",
+          "enum_values": []
+        }
+      ]
+    },
+    {
+      "category_name": "orders",
+      "category_label": "Orders",
+      "table_name": "vfx_Order",
+      "fields": [
+        {
+          "field_name": "volume",
+          "field_label": "Size (Lots)",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "SUM",
+          "enum_values": []
+        },
+        {
+          "field_name": "volume",
+          "field_label": "Count",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "COUNT",
+          "enum_values": []
+        },
+        {
+          "field_name": "type",
+          "field_label": "Type",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Market Order"},
+            {"value": 1, "label": "Buy Limit"},
+            {"value": 2, "label": "Buy Stop"},
+            {"value": 3, "label": "Sell Limit"},
+            {"value": 4, "label": "Sell Stop"},
+            {"value": 5, "label": "Buy Stop Limit"},
+            {"value": 6, "label": "Sell Stop Limit"}
+          ]
+        },
+        {
+          "field_name": "side",
+          "field_label": "Side",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Buy"},
+            {"value": 1, "label": "Sell"},
+            {"value": 2, "label": "Balance"},
+            {"value": 3, "label": "Credit"}
+          ]
+        },
+        {
+          "field_name": "status",
+          "field_label": "Status",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Started"},
+            {"value": 1, "label": "Placed"},
+            {"value": 2, "label": "Partially Filled"},
+            {"value": 3, "label": "Filled"},
+            {"value": 4, "label": "Canceled"},
+            {"value": 5, "label": "Rejected"},
+            {"value": 6, "label": "Expired"}
+          ]
+        },
+        {
+          "field_name": "order_price",
+          "field_label": "Price",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "AVG",
+          "enum_values": []
+        }
+      ]
+    },
+    {
+      "category_name": "positions",
+      "category_label": "Positions",
+      "table_name": "vfx_Position",
+      "fields": [
+        {
+          "field_name": "volume",
+          "field_label": "Total Size",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "SUM",
+          "enum_values": []
+        },
+        {
+          "field_name": "volume",
+          "field_label": "Count",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "COUNT",
+          "enum_values": []
+        },
+        {
+          "field_name": "profit",
+          "field_label": "Total P&L",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "SUM",
+          "enum_values": []
+        },
+        {
+          "field_name": "profit",
+          "field_label": "Average P&L",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "AVG",
+          "enum_values": []
+        },
+        {
+          "field_name": "open_price",
+          "field_label": "Avg Open Price",
+          "value_type": "number",
+          "input_type": "number",
+          "operator": [">", ">=", "<", "<=", "=", "!="],
+          "aggregation": "AVG",
+          "enum_values": []
+        },
+        {
+          "field_name": "status",
+          "field_label": "Status",
+          "value_type": "number",
+          "input_type": "select",
+          "operator": ["=", "!="],
+          "aggregation": "",
+          "enum_values": [
+            {"value": 0, "label": "Open Position"},
+            {"value": 1, "label": "Closing Position"},
+            {"value": 2, "label": "Closed Position"}
+          ]
+        }
+      ]
+    }
+  ],
+  "request_types": [
+    {"value": 1, "name": "all", "label": "All Requests"},
+    {"value": 2, "name": "instant_execution", "label": "Instant Execution"},	
+    {"value": 3, "name": "market_execution", "label": "Market Execution"},
+    {"value": 4, "name": "sl_tp_modification", "label": "SL/TP Modification"},
+    {"value": 5, "name": "order_modification", "label": "Order Modification"},
+    {"value": 6, "name": "order_removal", "label": "Order Removal"},
+    {"value": 7, "name": "sl_activation", "label": "Stop Loss Activation"},
+    {"value": 8, "name": "tp_activation", "label": "Take Profit Activation"}
+  ],
+  "order_types": [
+    {"value": 1, "name": "all", "label": "All Order Types"},
+    {"value": 2, "name": "buy", "label": "Buy Orders"},
+    {"value": 3, "name": "sell", "label": "Sell Orders"},
+    {"value": 4, "name": "buy_limit", "label": "Buy Limit"},
+    {"value": 5, "name": "sell_limit", "label": "Sell Limit"},
+    {"value": 6, "name": "buy_stop", "label": "Buy Stop"},
+    {"value": 7, "name": "sell_stop", "label": "Sell Stop"}
+  ]
+}

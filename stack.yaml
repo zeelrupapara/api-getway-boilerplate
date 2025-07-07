@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:alpine
+    restart: always
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - greenlync_network
+
+  mysql:
+    image: mysql:8
+    restart: always
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: greenlync
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - greenlync_network
+
+  nats:
+    image: nats:alpine
+    restart: always
+    container_name: nats
+    ports:
+      - "4222:4222"
+    networks:
+      - greenlync_network
+
+networks:
+  greenlync_network:
+    driver: bridge

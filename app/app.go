@@ -1,521 +1,186 @@
+// Developer 	: zeelrupapara@gmail.com
+// Last Update  : Cannabis boilerplate conversion
+// Update reason : Convert VFX trading platform to cannabis compliance system
 package app
 
 import (
 	"context"
 	"fmt"
+	"greenlync-api-gateway/config"
+	"greenlync-api-gateway/internal/server"
+	"greenlync-api-gateway/pkg/authz"
+	"greenlync-api-gateway/pkg/cache"
+	"greenlync-api-gateway/pkg/db"
+	"greenlync-api-gateway/pkg/i18n"
+	// Removed influxdb for minimal boilerplate
+	"greenlync-api-gateway/pkg/logger"
+	"greenlync-api-gateway/pkg/monitor"
+	"greenlync-api-gateway/pkg/nats"
+	"greenlync-api-gateway/pkg/redis"
+	"greenlync-api-gateway/pkg/smtp"
+	"greenlync-api-gateway/utils"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/config"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/logger"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/db"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/cache"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/messaging"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/oauth2"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/pkg/authz"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/model/common/v1"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/internal/handlers"
-	"gitlab.com/flexgrewtechnologies/greenlync-api-gateway/internal/middleware"
+	"github.com/go-co-op/gocron"
+	"github.com/go-playground/validator/v10"
 )
 
-// Application represents the main application instance
-// Following VFX Server pattern with dependency injection
-type Application struct {
-	Config *config.Config
-	Logger *logger.Logger
-	Fiber  *fiber.App
-	
-	// Services will be added as we implement them
-	DB            *db.Database
-	Cache         *cache.Cache
-	SessionManager *cache.SessionManager
-	Messaging     *messaging.NATS
-	OAuth2        *oauth2.Service
-	Authz         *authz.Service
-	// Hub    *manager.Hub
-}
+var (
+	// this name is one time only
+	service = "greenlync-api-gateway"
 
-// NewApplication creates a new application instance with dependency injection
-func NewApplication() (*Application, error) {
-	// Load configuration
-	cfg, err := config.NewConfig()
+	// this change as per git -tag -v everytime this will go into testing
+	// v1.0.0 Major.Minor.Batch or bug
+
+	version = "v1.0.0"
+)
+
+func Start() {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// config instant
+	cfg := config.NewConfig()
+
+	// pass to logger handler instant
+	log, _ := logger.NewLogger(cfg)
+
+	// Languages Translate
+	local, err := i18n.New(cfg, "en-US", "el-GR", "zh-CN")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load configuration: %w", err)
+		log.Logger.Fatalf("failed to init i18n package %v", err)
 	}
 
-	// Initialize logger
-	logConfig := &logger.LogConfig{
-		Level:       cfg.Logging.Level,
-		Format:      cfg.Logging.Format,
-		Output:      cfg.Logging.Output,
-		Structured:  cfg.Logging.Structured,
-		FileOutput:  cfg.Logging.FileOutput,
-		MaxFileSize: cfg.Logging.MaxFileSize,
-		MaxBackups:  cfg.Logging.MaxBackups,
-		MaxAge:      cfg.Logging.MaxAge,
-	}
+	// Start logging
+	log.Logger.Info("Logging started for service: ", service+"@"+version)
 
-	log, err := logger.NewLogger(logConfig)
+	// Init Monitor
+	monitor.InitMonitor()
+
+	// Check for the license and validate
+	// lm, err := license.NewLicenseMgr(cfg.License.COMPANY_ID, cfg.License.COMPANY_NAME)
+	// if err != nil {
+	// 	log.Logger.Fatalf("failed to init license manager %v", err)
+	// }
+
+	// // Validate the license
+	// err = lm.Validate()
+	// if err != nil {
+	// 	log.Logger.Fatalf("failed to validate license %v", err)
+	// }
+
+	// connect to redis
+	redisClient, err := redis.NewRedisClient(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		log.Logger.Fatalf("Error connectting to redis service at %v", cfg.Redis.RedisAddr)
 	}
 
-	// Create Fiber app with cannabis-specific configuration
-	fiberApp := fiber.New(fiber.Config{
-		ServerHeader:      "GreenLync-Gateway/1.0",
-		AppName:          "GreenLync Cannabis Social Commerce API Gateway",
-		ReadTimeout:      cfg.Server.ReadTimeout,
-		WriteTimeout:     cfg.Server.WriteTimeout,
-		IdleTimeout:      cfg.Server.IdleTimeout,
-		EnablePrintRoutes: cfg.Server.Debug,
-		ErrorHandler:     createErrorHandler(log),
-		BodyLimit:        50 * 1024 * 1024, // 50MB for file uploads (ID verification documents)
-	})
-
-	app := &Application{
-		Config: cfg,
-		Logger: log,
-		Fiber:  fiberApp,
+	if redisClient != nil {
+		log.Logger.Infof("Connected to redis %s", cfg.Redis.RedisAddr)
 	}
 
-	// Log application initialization
-	log.Info("Application initialized successfully",
-		"service", "greenlync-api-gateway",
-		"cannabis_compliance_mode", cfg.Cannabis.ComplianceMode,
-		"age_verification_required", cfg.Cannabis.AgeVerificationRequired,
-		"legal_states_count", len(cfg.Cannabis.LegalStates),
-	)
+	// make our cache wrapper from Redis
+	cacheClient := cache.NewCache(redisClient)
 
-	return app, nil
-}
-
-// Start starts the application services
-func (a *Application) Start() error {
-	a.Logger.Info("Starting GreenLync API Gateway services...")
-
-	// Initialize dependencies (will be implemented in next phases)
-	if err := a.initializeDependencies(); err != nil {
-		return fmt.Errorf("failed to initialize dependencies: %w", err)
+	// connect to mysql using gorm and grap a session
+	dbSess, err := db.NewMysqDB(cfg)
+	if err != nil {
+		fmt.Printf("We have a problem connecting to database %v", err)
+		panic(0)
 	}
 
-	// Setup middleware
-	if err := a.setupMiddleware(); err != nil {
-		return fmt.Errorf("failed to setup middleware: %w", err)
+	// This is the best time migrate in case you change the schema
+	err = dbSess.Migrate()
+	if err != nil {
+		fmt.Printf("We have a problem mirgrating tables %v", err)
+		panic(0)
 	}
 
-	// Setup routes
-	if err := a.setupRoutes(); err != nil {
-		return fmt.Errorf("failed to setup routes: %w", err)
+	// validate db data
+	err = dbSess.ValidateDBData()
+	if err != nil {
+		log.Logger.Warnf("Database validation warning: %v", err)
+		log.Logger.Info("Please run database seeding to create initial users and data")
 	}
 
-	// Start HTTP server
+	// convert auto increment Id to a custom id
+	err = dbSess.AlterTableIds()
+	if err != nil {
+		fmt.Printf("We have a problem converting auto increment Id to a custom id %v", err)
+		panic(0)
+	}
+
+	// Cannabis compliance setup can be added here in the future
+	// Example: Cannabis license validation, compliance checks, etc.
+
+	// Nats
+	nats, err := nats.NewNatClient(cfg)
+	if err != nil {
+		log.Logger.Fatalf("Error Connecting to Nats: %v", err)
+	}
+
+	// authorization
+	authz, err := authz.NewAuthz(dbSess.DB)
+	if err != nil {
+		fmt.Printf("We have a problem creating authorization %v", err)
+		panic(0)
+	}
+
+	// validetor
+	validate := validator.New()
+
+	// register custom validation functions
+	validate.RegisterValidation("username", utils.UsernameValidation)
+
+	// go-corn
+	cron := gocron.NewScheduler(time.UTC)
+	cron.StartAsync()
+
+	// Removed InfluxDB for minimal event-driven boilerplate
+
+	// SMTP
+	smtp, err := smtp.NewSmtpClient(cfg, log, dbSess, cron)
+	if err != nil {
+		monitor.ChangeStatus(monitor.Health_SMTP, monitor.HealthStatus_error)
+		log.Logger.Error("Error Connecting to SMTP: %v", err)
+	}
+	monitor.ChangeStatus(monitor.Health_SMTP, monitor.HealthStatus_running)
+
+	// http API server based on fiber
+	server := server.NewServer(local, log, cacheClient, dbSess.DB, authz, nats, validate, cfg, smtp, cron)
+
+	// Register all APP APIs
+	// this should be before listening
+	server.Register()
+
+	// start http server
 	go func() {
-		addr := a.Config.Server.GetServerAddress()
-		a.Logger.Info("Starting HTTP server",
-			"address", addr,
-			"cannabis_platform", true,
-		)
-		
-		if err := a.Fiber.Listen(addr); err != nil {
-			a.Logger.Fatal("Failed to start HTTP server",
-				"error", err,
-			)
+		err := server.App.Listen(cfg.HTTP.Host + cfg.HTTP.Port)
+		if err != nil {
+			log.Logger.Fatalf("Error trying to listenning on port %s: %v", cfg.HTTP.Port, err)
 		}
 	}()
 
-	return nil
-}
-
-// Shutdown gracefully shuts down the application
-func (a *Application) Shutdown(ctx context.Context) error {
-	a.Logger.Info("Shutting down application...")
-
-	// Shutdown Fiber server
-	if err := a.Fiber.ShutdownWithContext(ctx); err != nil {
-		a.Logger.Error("Error shutting down HTTP server",
-			"error", err,
-		)
-		return err
+	// when painc receover
+	if err := recover(); err != nil {
+		log.Logger.Fatalf("some panic ...:", err)
 	}
 
-	// Shutdown other services (will be implemented in next phases)
-	if err := a.shutdownDependencies(ctx); err != nil {
-		a.Logger.Error("Error shutting down dependencies",
-			"error", err,
-		)
-		return err
+	// we need nice way to exit will use os package notify
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case v := <-quit:
+		fmt.Printf("signal.Notify CTRL+C: %v", v)
+	case done := <-ctx.Done():
+		fmt.Printf("ctx.Done: %v", done)
 	}
 
-	// Sync logger
-	if err := a.Logger.Sync(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// initializeDependencies initializes all application dependencies
-func (a *Application) initializeDependencies() error {
-	a.Logger.Info("Initializing application dependencies...")
-
-	// Initialize database connection
-	database, err := db.NewDatabase(&a.Config.Database, a.Logger)
-	if err != nil {
-		return fmt.Errorf("failed to initialize database: %w", err)
-	}
-	a.DB = database
-
-	// Run database migrations
-	if err := a.DB.AutoMigrate(v1.GetAllModels()...); err != nil {
-		return fmt.Errorf("failed to run database migrations: %w", err)
-	}
-
-	// Setup multi-tenancy (dispensary isolation)
-	if err := a.DB.SetupMultiTenancy(); err != nil {
-		a.Logger.Warn("Failed to setup multi-tenancy", "error", err)
-	}
-
-	// Initialize Redis cache
-	redisCache, err := cache.NewCache(&a.Config.Redis, a.Logger)
-	if err != nil {
-		return fmt.Errorf("failed to initialize Redis cache: %w", err)
-	}
-	a.Cache = redisCache
-
-	// Initialize session manager
-	sessionManager := cache.NewSessionManager(a.Cache, a.Logger)
-	a.SessionManager = sessionManager
-
-	// Initialize NATS messaging
-	natsMessaging, err := messaging.NewNATS(&a.Config.NATS, a.Logger)
-	if err != nil {
-		return fmt.Errorf("failed to initialize NATS messaging: %w", err)
-	}
-	a.Messaging = natsMessaging
-
-	// Setup cannabis platform subscriptions
-	if err := a.Messaging.SetupCannabisSubscriptions(); err != nil {
-		a.Logger.Warn("Failed to setup cannabis subscriptions", "error", err)
-	}
-
-	// Initialize OAuth2 service
-	oauth2Service := oauth2.NewService(&a.Config.JWT, a.Logger, a.Cache)
-	a.OAuth2 = oauth2Service
-
-	// Initialize Casbin RBAC authorization service
-	authzService, err := authz.NewService(a.DB, a.Logger)
-	if err != nil {
-		return fmt.Errorf("failed to initialize authorization service: %w", err)
-	}
-	a.Authz = authzService
-
-	// TODO: Initialize WebSocket hub
-
-	a.Logger.Info("Dependencies initialization completed")
-	return nil
-}
-
-// setupMiddleware sets up the middleware chain
-func (a *Application) setupMiddleware() error {
-	a.Logger.Info("Setting up middleware chain...")
-
-	// Add global middleware (basic setup for now)
-	// TODO: Add comprehensive middleware in Phase 5
-
-	// Health check endpoint
-	a.Fiber.Get("/health", a.healthCheckHandler)
-
-	a.Logger.Info("Middleware setup completed")
-	return nil
-}
-
-// setupRoutes sets up all application routes
-func (a *Application) setupRoutes() error {
-	a.Logger.Info("Setting up application routes...")
-
-	// API version prefix
-	api := a.Fiber.Group("/api/v1")
-
-	// Cannabis compliance notice endpoint
-	api.Get("/compliance", a.complianceInfoHandler)
-
-	// Authentication routes (Phase 3.1)
-	a.setupAuthRoutes(api)
-
-	// Session management routes (Phase 3.2)
-	a.setupSessionRoutes(api)
-
-	// RBAC management routes (Phase 3.4)
-	a.setupRBACRoutes(api)
-
-	// TODO: Add user management routes in Phase 7
-	// TODO: Add WebSocket routes in Phase 4
-
-	a.Logger.Info("Routes setup completed")
-	return nil
-}
-
-// shutdownDependencies gracefully shuts down all dependencies
-func (a *Application) shutdownDependencies(ctx context.Context) error {
-	a.Logger.Info("Shutting down dependencies...")
-
-	// Close database connections
-	if a.DB != nil {
-		if err := a.DB.Close(); err != nil {
-			a.Logger.Error("Failed to close database connection", "error", err)
-			return err
-		}
-	}
-
-	// Close Redis connections
-	if a.Cache != nil {
-		if err := a.Cache.Close(); err != nil {
-			a.Logger.Error("Failed to close Redis connection", "error", err)
-			return err
-		}
-	}
-
-	// Close NATS connections
-	if a.Messaging != nil {
-		if err := a.Messaging.Close(); err != nil {
-			a.Logger.Error("Failed to close NATS connection", "error", err)
-			return err
-		}
-	}
-
-	// TODO: Close WebSocket hub
-
-	a.Logger.Info("Dependencies shutdown completed")
-	return nil
-}
-
-// healthCheckHandler provides health check endpoint
-func (a *Application) healthCheckHandler(c *fiber.Ctx) error {
-	health := map[string]interface{}{
-		"status":    "healthy",
-		"service":   "greenlync-api-gateway",
-		"version":   "1.0.0",
-		"timestamp": time.Now().UTC(),
-		"cannabis_compliance": map[string]interface{}{
-			"age_verification_required": a.Config.Cannabis.AgeVerificationRequired,
-			"minimum_age":              a.Config.Cannabis.MinimumAge,
-			"compliance_mode":          a.Config.Cannabis.ComplianceMode,
-			"legal_states_count":       len(a.Config.Cannabis.LegalStates),
-			"audit_logging_enabled":    a.Config.Cannabis.AuditLogging,
-		},
-		"dependencies": a.getDependencyHealth(),
-	}
-
-	return c.JSON(health)
-}
-
-// complianceInfoHandler provides cannabis compliance information
-func (a *Application) complianceInfoHandler(c *fiber.Ctx) error {
-	compliance := map[string]interface{}{
-		"platform_type":            "cannabis_social_commerce",
-		"age_requirement":          a.Config.Cannabis.MinimumAge,
-		"age_verification_required": a.Config.Cannabis.AgeVerificationRequired,
-		"compliance_mode":          a.Config.Cannabis.ComplianceMode,
-		"legal_states":             a.Config.Cannabis.LegalStates,
-		"state_check_enabled":      a.Config.Cannabis.StateCheckEnabled,
-		"purchase_limit_tracking":  a.Config.Cannabis.PurchaseLimitTracking,
-		"audit_logging":            a.Config.Cannabis.AuditLogging,
-		"notice": "This platform is restricted to users 21+ in states where cannabis is legal. Age verification and state compliance checks are required.",
-	}
-
-	return c.JSON(compliance)
-}
-
-// getDependencyHealth returns the health status of all dependencies
-func (a *Application) getDependencyHealth() map[string]interface{} {
-	health := make(map[string]interface{})
-
-	// Check database health
-	if a.DB != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		
-		if err := a.DB.Health(ctx); err != nil {
-			health["database"] = map[string]interface{}{
-				"status": "unhealthy",
-				"error":  err.Error(),
-			}
-		} else {
-			health["database"] = map[string]interface{}{
-				"status": "healthy",
-				"stats":  a.DB.GetStats(),
-			}
-		}
-	} else {
-		health["database"] = "not_initialized"
-	}
-
-	// Check Redis health
-	if a.Cache != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		
-		if err := a.Cache.Health(ctx); err != nil {
-			health["redis"] = map[string]interface{}{
-				"status": "unhealthy",
-				"error":  err.Error(),
-			}
-		} else {
-			health["redis"] = map[string]interface{}{
-				"status": "healthy",
-				"stats":  a.Cache.GetStats(),
-			}
-		}
-	} else {
-		health["redis"] = "not_initialized"
-	}
-
-	// Check NATS health
-	if a.Messaging != nil {
-		if err := a.Messaging.Health(); err != nil {
-			health["nats"] = map[string]interface{}{
-				"status": "unhealthy",
-				"error":  err.Error(),
-			}
-		} else {
-			health["nats"] = map[string]interface{}{
-				"status": "healthy",
-				"stats":  a.Messaging.GetStats(),
-			}
-		}
-	} else {
-		health["nats"] = "not_initialized"
-	}
-
-	return health
-}
-
-// createErrorHandler creates a custom error handler for cannabis compliance
-func createErrorHandler(log *logger.Logger) fiber.ErrorHandler {
-	return func(c *fiber.Ctx, err error) error {
-		code := fiber.StatusInternalServerError
-
-		// Type assertion for Fiber errors
-		if e, ok := err.(*fiber.Error); ok {
-			code = e.Code
-		}
-
-		// Log error with cannabis compliance context
-		log.Error("API Gateway error",
-			"error", err.Error(),
-			"status_code", code,
-			"path", c.Path(),
-			"method", c.Method(),
-			"ip", c.IP(),
-			"user_agent", c.Get("User-Agent"),
-			"cannabis_platform", true,
-		)
-
-		// Return error response with cannabis compliance notice
-		return c.Status(code).JSON(fiber.Map{
-			"error": fiber.Map{
-				"message":   err.Error(),
-				"code":      code,
-				"timestamp": time.Now().UTC(),
-				"path":      c.Path(),
-			},
-			"cannabis_notice": "This platform requires age verification (21+) and compliance with local cannabis laws",
-		})
-	}
-}
-
-// setupAuthRoutes sets up authentication routes
-func (a *Application) setupAuthRoutes(api fiber.Router) {
-	a.Logger.Info("Setting up authentication routes...")
-
-	// Create auth handler
-	authHandler := handlers.NewAuthHandler(a.OAuth2, a.Logger, a.DB, a.Messaging)
-
-	// Authentication group
-	auth := api.Group("/auth")
-
-	// Public authentication endpoints
-	auth.Post("/login", authHandler.Login)
-	auth.Post("/refresh", authHandler.RefreshToken)
-
-	// Protected authentication endpoints (require valid session)
-	authMiddleware := middleware.AuthMiddleware(middleware.AuthConfig{
-		OAuth2Service: a.OAuth2,
-		Logger:        a.Logger,
-		SkipPaths:     []string{}, // No skip paths for protected routes
-	})
-
-	protected := auth.Group("", authMiddleware)
-	protected.Post("/logout", authHandler.Logout)
-	protected.Get("/profile", authHandler.GetProfile)
-	protected.Post("/verify-compliance", authHandler.VerifyCompliance)
-	protected.Get("/sessions", authHandler.GetSessions)
-
-	a.Logger.Info("Authentication routes setup completed")
-}
-
-// setupSessionRoutes sets up session management routes
-func (a *Application) setupSessionRoutes(api fiber.Router) {
-	a.Logger.Info("Setting up session management routes...")
-
-	// Create session handler
-	sessionHandler := handlers.NewSessionHandler(a.SessionManager, a.Logger, a.Messaging)
-
-	// Session management group (requires authentication)
-	authMiddleware := middleware.AuthMiddleware(middleware.AuthConfig{
-		OAuth2Service: a.OAuth2,
-		Logger:        a.Logger,
-		SkipPaths:     []string{},
-	})
-
-	sessions := api.Group("/sessions", authMiddleware)
-
-	// Session activity tracking
-	sessions.Post("/track-activity", sessionHandler.TrackActivity)
-	sessions.Get("/activity", sessionHandler.GetActivity)
-
-	// Cannabis compliance management
-	sessions.Post("/update-compliance", sessionHandler.UpdateCompliance)
-
-	// Session metrics (admin/manager only)
-	sessions.Get("/metrics", middleware.RequirePermission(a.OAuth2, a.Logger, "view_reports"), sessionHandler.GetMetrics)
-
-	// Admin-only session management
-	sessions.Post("/cleanup", middleware.RequireRole(a.OAuth2, a.Logger, v1.RoleSystemAdmin), sessionHandler.CleanupExpiredSessions)
-
-	a.Logger.Info("Session management routes setup completed")
-}
-
-// setupRBACRoutes sets up RBAC management routes
-func (a *Application) setupRBACRoutes(api fiber.Router) {
-	a.Logger.Info("Setting up RBAC management routes...")
-
-	// Create RBAC handler
-	rbacHandler := handlers.NewRBACHandler(a.Authz, a.Logger, a.Messaging)
-
-	// RBAC management group (requires authentication)
-	authMiddleware := middleware.AuthMiddleware(middleware.AuthConfig{
-		OAuth2Service: a.OAuth2,
-		Logger:        a.Logger,
-		SkipPaths:     []string{},
-	})
-
-	rbac := api.Group("/rbac", authMiddleware)
-
-	// Permission checking (available to managers and admins)
-	rbac.Post("/check-permission", middleware.RequireManagerRole(a.OAuth2, a.Logger), rbacHandler.CheckPermission)
-
-	// Role information (available to budtenders and above)
-	rbac.Get("/roles", middleware.RequireBudtenderRole(a.OAuth2, a.Authz, a.Logger), rbacHandler.GetAllRoles)
-	rbac.Get("/roles/:role/permissions", middleware.RequireBudtenderRole(a.OAuth2, a.Authz, a.Logger), rbacHandler.GetRolePermissions)
-
-	// Resource information (available to budtenders and above)
-	rbac.Get("/resources", middleware.RequireBudtenderRole(a.OAuth2, a.Authz, a.Logger), rbacHandler.GetCannabisResources)
-
-	// Policy management (admin only)
-	adminOnly := rbac.Group("", middleware.RequireAdminRole(a.OAuth2, a.Logger))
-	adminOnly.Post("/policies", rbacHandler.AddPolicy)
-	adminOnly.Delete("/policies", rbacHandler.RemovePolicy)
-
-	a.Logger.Info("RBAC management routes setup completed")
+	// graceful shutdown completed
+	log.Logger.Info("Server shutdown completed")
 }

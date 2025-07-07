@@ -1,0 +1,25 @@
+swagger: "2.0"
+info:
+  title: "GreenLync API Gateway"
+  description: "GreenLync Cannabis API Gateway"
+  contact:
+    name: "API Support"
+    email: "zeelrupapara@gmail.com"
+  license:
+    name: "GreenLync"
+    url: "https://greenlync.com"
+  version: "1.0"
+host: "localhost:8888"
+basePath: "/"
+schemes:
+  - "http"
+  - "https"
+securityDefinitions:
+  BasicAuth:
+    type: "basic"
+  BearerAuth:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    description: "Type \"BearerAuth\" followed by a space and Access token."
+paths: {}
